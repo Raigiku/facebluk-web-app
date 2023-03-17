@@ -23,7 +23,7 @@ const Layout = (props: LayoutProps) => {
 
 const Footer = () => {
   return (
-    <div className="flex gap-4 text-xs text-neutral-100 bg-blue-500 p-2">
+    <div className="flex gap-4 text-xs text-neutral-100 bg-primary p-2">
       <div>Contact</div>
       <a href="mailto:diegodevofficial@gmail.com" className="underline">
         diegodevofficial@gmail.com

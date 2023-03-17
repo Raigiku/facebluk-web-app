@@ -21,7 +21,7 @@ const HomePage = (props: HomeProps) => {
     props.session === null ? (
       <HomeNotLoggedInContent supabase={supabase} />
     ) : (
-      <HomeLoggedInContent />
+      <HomeLoggedInContent session={props.session} />
     );
 
   return HomeContent;
@@ -34,11 +34,12 @@ type HomeNotLoggedInContentProps = {
 };
 
 const HomeNotLoggedInContent = (props: HomeNotLoggedInContentProps) => {
+  props.supabase.auth.signInWithOAuth({provider:'google',options:{}})
   return (
     <div className="flex flex-1 self-center">
       <div className="flex flex-1 gap-12">
         <div className="flex flex-col flex-1 justify-center gap-2">
-          <h1 className="text-5xl font-bold text-blue-500">facebluk</h1>
+          <h1 className="text-5xl font-bold text-primary">facebluk</h1>
           <p className="text-lg">
             Connect with friends and the world around you on Facebook.
           </p>
@@ -63,13 +64,15 @@ const HomeNotLoggedInContent = (props: HomeNotLoggedInContentProps) => {
   );
 };
 
-const HomeLoggedInContent = () => {
+type HomeLoggedInContentProps = {
+  session: Session;
+};
+
+const HomeLoggedInContent = (props: HomeLoggedInContentProps) => {
   return (
     <>
       <NavBar />
-      <div className="flex-1">
-        dsadasd
-      </div>
+      <div className="flex-1">{props.session.access_token}</div>
     </>
   );
 };
