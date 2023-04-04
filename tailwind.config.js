@@ -13,7 +13,13 @@ module.exports = {
       colors: {
         primary: "#3b82f6",
       },
+      minHeight: {
+        1: "1rem",
+      },
     },
   },
-  plugins: [],
+  plugins: [require("daisyui")],
+  daisyui: {
+    darkTheme: "none",
+  },
 };
