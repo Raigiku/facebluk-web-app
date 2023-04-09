@@ -59,6 +59,9 @@ const InfoForm = (props: InfoFormProps) => {
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("Required");
 
+  const [alias, setAlias] = useState("");
+  const [aliasError, setAliasError] = useState("Required");
+
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [profilePictureError, setProfilePictureError] = useState("");
 
@@ -95,6 +98,13 @@ const InfoForm = (props: InfoFormProps) => {
   }, [name]);
 
   useEffect(() => {
+    const alphanumericRegex = /^[a-z0-9]+$/i;
+    if (alias.length === 0) setAliasError("Required");
+    else if (!alphanumericRegex.test(alias)) setAliasError("Only alphanumeric characters");
+    else setAliasError("");
+  }, [alias]);
+
+  useEffect(() => {
     const allowedExtensions = ["image/png", "image/jpg", "image/jpeg"];
     if (
       profilePicture !== null &&
@@ -106,10 +116,10 @@ const InfoForm = (props: InfoFormProps) => {
 
   const onClickSubmitForm = (e: React.MouseEvent) => {
     e.preventDefault();
-    apiSubmitUserRegister.mutate({ name, profilePicture });
+    apiSubmitUserRegister.mutate({ name, profilePicture, alias });
   };
 
-  const anyInputErrors = nameError !== "";
+  const anyInputErrors = nameError !== "" || aliasError !== "";
 
   const disableFormSubmitBtn =
     anyInputErrors || apiSubmitUserRegister.isLoading;
@@ -147,6 +157,26 @@ const InfoForm = (props: InfoFormProps) => {
             <label className="label">
               <span className="label-text-alt text-red-500 min-h-1">
                 {nameError}
+              </span>
+            </label>
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Give yourself an alias!</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Type here"
+              className="input input-bordered"
+              value={alias}
+              onChange={(e) => {
+                setAlias(e.currentTarget.value);
+              }}
+            />
+            <label className="label">
+              <span className="label-text-alt text-red-500 min-h-1">
+                {aliasError}
               </span>
             </label>
           </div>

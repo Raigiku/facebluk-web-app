@@ -3,12 +3,14 @@ import { EVENT_STORE_API_URL } from ".";
 
 export type Request = {
   readonly name: string;
+  readonly alias: string;
   readonly profilePicture: File | null;
 };
 
 export const apiCall = (body: Request, bearerToken: string) => {
   const data = new FormData();
   data.append("name", body.name);
+  data.append("alias", body.alias);
   if (body.profilePicture !== null)
     data.append("profilePicture", body.profilePicture);
 

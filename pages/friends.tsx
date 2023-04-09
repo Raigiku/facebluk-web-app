@@ -13,11 +13,9 @@ const FriendsPage: NextPageWithLayout = () => {
         <h1 className="text-xl font-medium">Friends</h1>
         <div className="grid grid-cols-4 gap-4">
           {friends.map((x) => (
-            <div
-              key={x.userId}
-              className="flex flex-col items-center justify-end"
-            >
+            <div key={x.userId} className="flex flex-col items-center justify-end">
               <Image
+                className="rounded-full"
                 src={x.image.url}
                 alt={x.name}
                 width={x.image.width}
