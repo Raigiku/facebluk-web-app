@@ -1,5 +1,5 @@
 import NavBar from "@/components/navbar";
-import { ApiRegisterUser, FaceblukApiError } from "@/external-apis/event-store";
+import { EventStore } from "@/external-apis";
 import {
   Session,
   createServerSupabaseClient,
@@ -19,8 +19,6 @@ type HomePageProps = {
 const HomePage = (props: HomePageProps) => {
   const supabase = useSupabaseClient();
   const router = useRouter();
-
-  console.log(props.authSession);
 
   const onClickLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -68,8 +66,11 @@ const InfoForm = (props: InfoFormProps) => {
   const [apiMutationError, setApiMutationError] = useState("");
 
   const apiSubmitUserRegister = useMutation({
-    mutationFn: (request: ApiRegisterUser.Request) => {
-      return ApiRegisterUser.apiCall(request, props.authSession.access_token);
+    mutationFn: (request: EventStore.RegisterUser.Request) => {
+      return EventStore.RegisterUser.apiCall(
+        request,
+        props.authSession.access_token
+      );
     },
     onSuccess: () => {
       setIsInfoModalActive(false);
@@ -78,7 +79,7 @@ const InfoForm = (props: InfoFormProps) => {
     onError: (err) => {
       if (err instanceof AxiosError) {
         if (err.response !== undefined) {
-          const res = err.response.data as FaceblukApiError;
+          const res = err.response.data as EventStore.FaceblukApiError;
           setApiMutationError(res.message);
         } else {
           setApiMutationError(err.message);
@@ -100,7 +101,8 @@ const InfoForm = (props: InfoFormProps) => {
   useEffect(() => {
     const alphanumericRegex = /^[a-z0-9]+$/i;
     if (alias.length === 0) setAliasError("Required");
-    else if (!alphanumericRegex.test(alias)) setAliasError("Only alphanumeric characters");
+    else if (!alphanumericRegex.test(alias))
+      setAliasError("Only alphanumeric characters");
     else setAliasError("");
   }, [alias]);
 
