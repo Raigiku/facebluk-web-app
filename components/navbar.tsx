@@ -2,7 +2,11 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { FaSearch } from "react-icons/fa";
 
-const NavBar = () => {
+type NavBarProps = {
+  searchQuery?: string;
+};
+
+const NavBar = (props: NavBarProps) => {
   const router = useRouter();
 
   const onSearchUserSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -28,6 +32,7 @@ const NavBar = () => {
             name="query"
             placeholder="Search someone by name or alias"
             className="flex-1 input input-bordered"
+            defaultValue={props.searchQuery}
           />
           <button className="btn">
             <FaSearch />
