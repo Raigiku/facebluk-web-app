@@ -66,8 +66,8 @@ const InfoForm = (props: InfoFormProps) => {
   const [apiMutationError, setApiMutationError] = useState("");
 
   const apiSubmitUserRegister = useMutation({
-    mutationFn: (request: EventStore.RegisterUser.Request) => {
-      return EventStore.RegisterUser.apiCall(
+    mutationFn: (request: EventStore.User.Register.Request) => {
+      return EventStore.User.Register.apiCall(
         request,
         props.authSession.access_token
       );

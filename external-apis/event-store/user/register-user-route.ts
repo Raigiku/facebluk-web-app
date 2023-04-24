@@ -1,5 +1,5 @@
 import axios from "axios";
-import { EVENT_STORE_API_URL } from ".";
+import { EVENT_STORE_API_URL } from "..";
 
 export type Request = {
   readonly name: string;
@@ -7,12 +7,12 @@ export type Request = {
   readonly profilePicture: File | null;
 };
 
-export const apiCall = (body: Request, bearerToken: string) => {
+export const apiCall = (request: Request, bearerToken: string) => {
   const data = new FormData();
-  data.append("name", body.name);
-  data.append("alias", body.alias);
-  if (body.profilePicture !== null)
-    data.append("profilePicture", body.profilePicture);
+  data.append("name", request.name);
+  data.append("alias", request.alias);
+  if (request.profilePicture !== null)
+    data.append("profilePicture", request.profilePicture);
 
   return axios
     .postForm("/api/users/register", data, {

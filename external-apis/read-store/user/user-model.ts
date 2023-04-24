@@ -2,5 +2,5 @@ export type UserModel = {
   readonly id: string;
   readonly alias: string;
   readonly name: string;
-  readonly profilePictureUrl: string | undefined | null;
+  readonly profilePictureUrl: string | null;
 };

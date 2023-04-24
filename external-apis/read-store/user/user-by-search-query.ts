@@ -2,33 +2,39 @@ import { PaginationResponse } from "@/external-apis/common";
 import { gql } from "@apollo/client";
 import { User, graphqlClient } from "..";
 
-export type Args = {
+export type Params = {
   readonly searchQuery: string;
   readonly page: number;
   readonly pageSize: number;
 };
 
 export const apiCall = (
-  searchQuery: string,
-  page: number,
-  pageSize: number
+  params: Params
 ): Promise<PaginationResponse<User.UserModel>> => {
   return graphqlClient
     .query({
       query: gql`
-        query Users($searchQuery: String!, $page: Int!, $pageSize: Int!) {
-          users(searchQuery: $searchQuery, page: $page, pageSize: $pageSize) {
+        query UsersBySearchQuery(
+          $searchQuery: String!
+          $page: Int!
+          $pageSize: Int!
+        ) {
+          usersBySearchQuery(
+            searchQuery: $searchQuery
+            page: $page
+            pageSize: $pageSize
+          ) {
             totalPages
             data {
-              id
               alias
+              id
               name
               profilePictureUrl
             }
           }
         }
       `,
-      variables: { searchQuery, page, pageSize },
+      variables: params,
     })
-    .then((res) => res.data.users);
+    .then((res) => res.data.usersBySearchQuery);
 };

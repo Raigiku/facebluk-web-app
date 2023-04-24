@@ -1,3 +1,4 @@
+import { useSession } from "@supabase/auth-helpers-react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { FaSearch } from "react-icons/fa";
@@ -7,12 +8,13 @@ type NavBarProps = {
 };
 
 const NavBar = (props: NavBarProps) => {
+  const authSession = useSession();
   const router = useRouter();
 
   const onSearchUserSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const query = e.currentTarget.query.value;
-    router.push(`/search/${query}`);
+    if (query?.length > 0) router.push(`/search/${query}`);
   };
 
   return (
@@ -43,6 +45,8 @@ const NavBar = (props: NavBarProps) => {
       <div className="flex flex-1 justify-center">
         <Link href="/friends">Friends</Link>
       </div>
+
+      <div></div>
     </div>
   );
 };

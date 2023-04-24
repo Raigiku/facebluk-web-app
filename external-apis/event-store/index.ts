@@ -1,5 +1,6 @@
-export * from './errors';
-export * as RegisterUser from "./register-user-route";
+export * from "./errors";
+export * as FriendRequest from './friend-request';
+export * as User from "./user";
 
 export const EVENT_STORE_API_URL =
   process.env.ENVIRONMENT === "local"
