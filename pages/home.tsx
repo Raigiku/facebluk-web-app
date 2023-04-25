@@ -8,8 +8,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { GetServerSideProps } from "next";
-import { useRouter } from "next/router";
-import { ReactElement, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FcInfo } from "react-icons/fc";
 
 type HomePageProps = {
@@ -18,13 +17,6 @@ type HomePageProps = {
 
 const HomePage = (props: HomePageProps) => {
   const supabase = useSupabaseClient();
-  const router = useRouter();
-
-  const onClickLogout = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await supabase.auth.signOut();
-    router.push("/");
-  };
 
   const onClickRefresh = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -32,16 +24,16 @@ const HomePage = (props: HomePageProps) => {
   };
 
   return (
-    <div className="flex-1 flex flex-col">
-      <InfoForm authSession={props.authSession} />
-      <div>{props.authSession?.access_token}</div>
-      <button className="btn btn-primary" onClick={onClickRefresh}>
-        Refresh
-      </button>
-      <button className="btn btn-secondary" onClick={onClickLogout}>
-        Logout
-      </button>
-    </div>
+    <>
+      <NavBar userId={props.authSession.user.id} />
+      <div className="flex-1 flex flex-col">
+        <InfoForm authSession={props.authSession} />
+        <div>{props.authSession?.access_token}</div>
+        <button className="btn btn-primary" onClick={onClickRefresh}>
+          Refresh
+        </button>
+      </div>
+    </>
   );
 };
 
@@ -223,15 +215,6 @@ const InfoForm = (props: InfoFormProps) => {
           </div>
         </div>
       </div>
-    </>
-  );
-};
-
-HomePage.getLayout = (page: ReactElement) => {
-  return (
-    <>
-      <NavBar />
-      {page}
     </>
   );
 };

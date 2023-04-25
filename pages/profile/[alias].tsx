@@ -21,7 +21,7 @@ const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
 
   return (
     <>
-      <NavBar />
+      <NavBar userId={props.authSession.user.id} />
       <div className="flex-1 flex">
         {props.user === null ? (
           <div className="flex-1 flex flex-col justify-center items-center gap-2">

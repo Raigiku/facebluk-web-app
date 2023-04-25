@@ -32,6 +32,7 @@ const Footer = () => {
         href="https://www.linkedin.com/in/diego-castillo1/"
         target="_blank"
         className="underline"
+        rel="noopener noreferrer"
       >
         https://www.linkedin.com/in/diego-castillo1/
       </a>

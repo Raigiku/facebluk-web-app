@@ -54,7 +54,10 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
 
   return (
     <>
-      <NavBar searchQuery={router.query.query as string} />
+      <NavBar
+        searchQuery={router.query.query as string}
+        userId={props.authSession.user.id}
+      />
       <div className="flex-1 p-8 grid grid-cols-4">
         {apiSearchQuery.data === undefined ||
         apiSearchQuery.data.data.length === 0 ? (
@@ -192,8 +195,8 @@ const UserFoundCard = (props: UserFoundCardProps) => {
             <Image
               alt={props.user.alias}
               src={profilePicture}
-              width={80}
-              height={80}
+              width={100}
+              height={100}
             />
           </div>
         </div>
