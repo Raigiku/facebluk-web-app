@@ -1,1 +1,2 @@
-export * as Register from './register-user-route';
+export * as Register from './register-user-api';
+

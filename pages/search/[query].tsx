@@ -5,7 +5,7 @@ import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { Session } from "@supabase/supabase-js";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { GetServerSideProps } from "next";
 import Image from "next/image";
 import { NextRouter, useRouter } from "next/router";
@@ -29,9 +29,13 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
   const [page, setPage] = useState(1);
 
   const apiSearchQuery = useQuery({
-    queryKey: ["search", searchQuery, page],
+    queryKey: [ReadStore.queryKeys.searchUser, searchQuery, page],
     queryFn: () =>
-      ReadStore.User.BySearch.apiCall({ searchQuery, page, pageSize }),
+      ReadStore.User.GetMany.apiCall({
+        filter: { a: { searchQuery } },
+        page,
+        pageSize,
+      }),
     initialData: page === 1 ? props.searchResponse : undefined,
     enabled: props.searchResponse !== undefined,
     keepPreviousData: true,
@@ -142,8 +146,8 @@ export const getServerSideProps: GetServerSideProps<SearchPageProps> = async (
     if (authSession !== undefined) {
       try {
         const searchQuery = ctx.query.query as string;
-        const searchResponse = await ReadStore.User.BySearch.apiCall({
-          searchQuery,
+        const searchResponse = await ReadStore.User.GetMany.apiCall({
+          filter: { a: { searchQuery } },
           page: 1,
           pageSize,
         });
@@ -168,12 +172,17 @@ const UserFoundCard = (props: UserFoundCardProps) => {
       ? AnonymousProfilePicture
       : props.user.profilePictureUrl;
 
+  const queryClient = useQueryClient();
+
   const apiSendFriendRequest = useMutation({
     mutationFn: (request: EventStore.FriendRequest.Send.Request) => {
       return EventStore.FriendRequest.Send.apiCall(
         request,
         props.authSession.access_token
       );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [ReadStore.queryKeys.friendRequest] });
     },
   });
 
@@ -183,7 +192,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
     props.router.push(`/profile/${props.user.alias}`);
   };
 
-  const onSendFriendRequestClicked = () => () => {
+  const onSendFriendRequestClicked = () => {
     apiSendFriendRequest.mutate({ toUserId: props.user.id });
   };
 
@@ -213,7 +222,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
                 : onSendFriendRequestClicked
             }
           >
-            {isFoundUserLoggedUser ? "View Profile" : "Send Friend Request"}
+            {isFoundUserLoggedUser ? "View Profile" : "Add Friend"}
           </button>
         </div>
       </div>

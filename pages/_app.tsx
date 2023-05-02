@@ -3,6 +3,7 @@ import "@/styles/globals.css";
 import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NextPage } from "next";
 import type { AppProps } from "next/app";
 import { ReactElement, ReactNode, useState } from "react";
@@ -28,6 +29,7 @@ const App = ({ Component, pageProps }: AppPropsWithLayout) => {
     >
       <QueryClientProvider client={queryClient}>
         <Layout>{getLayout(<Component {...pageProps} />)}</Layout>
+        <ReactQueryDevtools initialIsOpen={true} />
       </QueryClientProvider>
     </SessionContextProvider>
   );

@@ -17,8 +17,9 @@ const NavBar = (props: NavBarProps) => {
   const supabase = useSupabaseClient();
 
   const apiUser = useQuery({
-    queryKey: ["user", props.userId],
-    queryFn: () => ReadStore.User.ById.apiCall({ id: props.userId }),
+    queryKey: [ReadStore.queryKeys.user, props.userId],
+    queryFn: () =>
+      ReadStore.User.GetOne.apiCall({ filter: { a: { id: props.userId } } }),
   });
 
   const onSearchUserSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -31,6 +32,10 @@ const NavBar = (props: NavBarProps) => {
     apiUser.data?.profilePictureUrl == null
       ? AnonymousProfilePicture
       : apiUser.data.profilePictureUrl;
+
+  const onClickFriendRequests = async () => {
+    router.push("/friend-requests");
+  };
 
   const onClickLogout = async () => {
     await supabase.auth.signOut();
@@ -78,7 +83,7 @@ const NavBar = (props: NavBarProps) => {
             tabIndex={0}
             className="dropdown-content menu shadow bg-base-100 rounded-box w-52"
           >
-            <li>
+            <li onClick={onClickFriendRequests}>
               <a>Friend Requests</a>
             </li>
             <li onClick={onClickLogout}>

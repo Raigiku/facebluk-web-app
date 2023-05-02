@@ -12,7 +12,7 @@ const HomePage = () => {
 
   useEffect(() => {
     if (authSession !== null) router.push("/home");
-  }, [authSession]);
+  }, [authSession, router]);
 
   return (
     <div className="flex flex-1 self-center">

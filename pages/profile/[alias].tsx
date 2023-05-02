@@ -75,8 +75,8 @@ export const getServerSideProps: GetServerSideProps<ProfilePageProps> = async (
     if (authSession !== undefined) {
       try {
         const aliasQuery = ctx.query.alias as string;
-        const userResponse = await ReadStore.User.ByAlias.apiCall({
-          alias: aliasQuery,
+        const userResponse = await ReadStore.User.GetOne.apiCall({
+          filter: { b: { alias: aliasQuery } },
         });
         return { props: { authSession, user: userResponse } };
       } catch (error) {
