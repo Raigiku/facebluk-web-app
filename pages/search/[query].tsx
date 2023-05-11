@@ -1,11 +1,16 @@
 import NavBar from "@/components/navbar";
-import { EventStore, PaginationResponse, ReadStore } from "@/external-apis";
-import { User } from "@/external-apis/read-store";
+import { EventStore, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { Session } from "@supabase/supabase-js";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  QueryClient,
+  dehydrate,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { GetServerSideProps } from "next";
 import Image from "next/image";
 import { NextRouter, useRouter } from "next/router";
@@ -15,7 +20,6 @@ import { NextPageWithLayout } from "../_app";
 
 type SearchPageProps = {
   authSession: Session;
-  searchResponse?: PaginationResponse<User.UserModel>;
 };
 
 const pageSize = 5;
@@ -32,12 +36,10 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
     queryKey: [ReadStore.queryKeys.searchUser, searchQuery, page],
     queryFn: () =>
       ReadStore.User.GetMany.apiCall({
-        filter: { a: { searchQuery } },
+        filter: { a: { searchQuery, userId: props.authSession.user.id } },
         page,
         pageSize,
       }),
-    initialData: page === 1 ? props.searchResponse : undefined,
-    enabled: props.searchResponse !== undefined,
     keepPreviousData: true,
   });
 
@@ -143,18 +145,22 @@ export const getServerSideProps: GetServerSideProps<SearchPageProps> = async (
       if (refreshedSessionRes.data.session !== null)
         authSession = refreshedSessionRes.data.session;
     }
+
     if (authSession !== undefined) {
-      try {
-        const searchQuery = ctx.query.query as string;
-        const searchResponse = await ReadStore.User.GetMany.apiCall({
-          filter: { a: { searchQuery } },
-          page: 1,
-          pageSize,
-        });
-        return { props: { searchResponse, authSession } };
-      } catch (error) {
-        return { props: { authSession } };
-      }
+      const queryClient = new QueryClient();
+      const searchQuery = ctx.query.query as string;
+      await queryClient.prefetchQuery(
+        [ReadStore.queryKeys.searchUser, searchQuery, 1],
+        () =>
+          ReadStore.User.GetMany.apiCall({
+            filter: { a: { searchQuery, userId: authSession!.user.id } },
+            page: 1,
+            pageSize,
+          })
+      );
+      return {
+        props: { authSession, dehydratedState: dehydrate(queryClient) },
+      };
     }
   }
   return { redirect: { destination: "/", permanent: true } };
@@ -182,7 +188,9 @@ const UserFoundCard = (props: UserFoundCardProps) => {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [ReadStore.queryKeys.friendRequest] });
+      queryClient.invalidateQueries({
+        queryKey: [ReadStore.queryKeys.friendRequest],
+      });
     },
   });
 
@@ -212,6 +220,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         <div className="flex flex-col">
           <div className="text-base font-medium">{props.user.name}</div>
           <div className="italic">@{props.user.alias}</div>
+          <div>{JSON.stringify(props.user.relationshipWithUser)}</div>
         </div>
         <div className="flex-1 flex justify-end">
           <button

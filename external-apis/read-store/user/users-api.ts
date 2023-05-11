@@ -5,7 +5,7 @@ import { READ_STORE_API_URL } from "..";
 
 export type Params = {
   readonly filter: {
-    readonly a?: { readonly searchQuery: string };
+    readonly a?: { readonly searchQuery: string; readonly userId: string };
   };
   readonly page: number;
   readonly pageSize: number;
@@ -25,6 +25,10 @@ export const apiCall = (
             name
             alias
             profilePictureUrl
+            relationshipWithUser {
+              isFriend
+              isFriendRequestPending
+            }
           }
         }
       }

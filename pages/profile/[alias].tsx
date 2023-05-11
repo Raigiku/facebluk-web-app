@@ -4,26 +4,38 @@ import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { Session } from "@supabase/auth-helpers-react";
+import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { GetServerSideProps } from "next";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import { NextPageWithLayout } from "../_app";
 
 type ProfilePageProps = {
   authSession: Session;
-  user: ReadStore.User.UserModel | null;
 };
 
 const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
   props: ProfilePageProps
 ) => {
+  const router = useRouter();
+  const userAlias = router.query.alias as string;
+
+  const apiUser = useQuery({
+    queryKey: [ReadStore.queryKeys.user, userAlias],
+    queryFn: () =>
+      ReadStore.User.GetOne.apiCall({
+        filter: { b: { alias: userAlias } },
+      }),
+  });
+
   const profilePicture =
-    props.user?.profilePictureUrl ?? AnonymousProfilePicture;
+    apiUser.data?.profilePictureUrl ?? AnonymousProfilePicture;
 
   return (
     <>
       <NavBar userId={props.authSession.user.id} />
       <div className="flex-1 flex">
-        {props.user === null ? (
+        {apiUser.data == null ? (
           <div className="flex-1 flex flex-col justify-center items-center gap-2">
             <Image
               alt="no-user-found"
@@ -38,7 +50,7 @@ const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
             <div className="avatar">
               <div className="w-40 rounded-full">
                 <Image
-                  alt={props.user.alias}
+                  alt={apiUser.data.alias}
                   src={profilePicture}
                   width={80}
                   height={80}
@@ -46,8 +58,8 @@ const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
               </div>
             </div>
             <div>
-              <div className="text-base font-medium">{props.user.name}</div>
-              <div className="italic">@{props.user.alias}</div>
+              <div className="text-base font-medium">{apiUser.data.name}</div>
+              <div className="italic">@{apiUser.data.alias}</div>
             </div>
           </div>
         )}
@@ -73,15 +85,18 @@ export const getServerSideProps: GetServerSideProps<ProfilePageProps> = async (
         authSession = refreshedSessionRes.data.session;
     }
     if (authSession !== undefined) {
-      try {
-        const aliasQuery = ctx.query.alias as string;
-        const userResponse = await ReadStore.User.GetOne.apiCall({
-          filter: { b: { alias: aliasQuery } },
-        });
-        return { props: { authSession, user: userResponse } };
-      } catch (error) {
-        return { props: { authSession, user: null } };
-      }
+      const queryClient = new QueryClient();
+      const aliasQuery = ctx.query.alias as string;
+      await queryClient.prefetchQuery(
+        [ReadStore.queryKeys.user, aliasQuery],
+        () =>
+          ReadStore.User.GetOne.apiCall({
+            filter: { b: { alias: aliasQuery } },
+          })
+      );
+      return {
+        props: { authSession, dehydratedState: dehydrate(queryClient) },
+      };
     }
   }
   return { redirect: { destination: "/", permanent: true } };

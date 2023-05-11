@@ -1,12 +1,17 @@
 import NavBar from "@/components/navbar";
-import { EventStore, PaginationResponse, ReadStore } from "@/external-apis";
-import { FriendRequest } from "@/external-apis/read-store";
+import { EventStore, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import WindImg from "@/public/wind.png";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { Session } from "@supabase/auth-helpers-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  QueryClient,
+  dehydrate,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { GetServerSideProps } from "next";
 import Image from "next/image";
 import { NextRouter, useRouter } from "next/router";
@@ -16,7 +21,6 @@ import { NextPageWithLayout } from "./_app";
 
 type FriendRequestsPageProps = {
   authSession: Session;
-  friendRequestsResponse?: PaginationResponse<FriendRequest.FriendRequestModel>;
 };
 
 const pageSize = 5;
@@ -36,8 +40,6 @@ const FriendRequestsPage: NextPageWithLayout<FriendRequestsPageProps> = (
         page,
         pageSize,
       }),
-    initialData: page === 1 ? props.friendRequestsResponse : undefined,
-    enabled: props.friendRequestsResponse !== undefined,
     keepPreviousData: true,
   });
 
@@ -56,16 +58,15 @@ const FriendRequestsPage: NextPageWithLayout<FriendRequestsPageProps> = (
       ? page < apiFriendRequests.data.totalPages
       : false;
 
-  const apiError =
-    apiFriendRequests.isError || apiFriendRequests.data === undefined;
-  const apiNoResults = apiFriendRequests.data?.data.length === 0;
+  const apiErrorOrNoResults =
+    apiFriendRequests.isError || apiFriendRequests.data?.data.length === 0;
 
   return (
     <>
       <NavBar userId={props.authSession.user.id} />
       <div className="flex-1 p-8 grid grid-cols-4">
-        {apiError || apiNoResults ? (
-          <ErrorOrNoResultsFound errorOcurred={apiError} />
+        {apiErrorOrNoResults ? (
+          <ErrorOrNoResultsFound errorOcurred={apiFriendRequests.isError} />
         ) : (
           <>
             {page > 1 && (
@@ -127,18 +128,19 @@ export const getServerSideProps: GetServerSideProps<
       if (refreshedSessionRes.data.session !== null)
         authSession = refreshedSessionRes.data.session;
     }
+
     if (authSession !== undefined) {
-      try {
-        const friendRequestsResponse =
-          await ReadStore.FriendRequest.GetMany.apiCall({
-            filter: { a: { userId: authSession.user.id } },
-            page: 1,
-            pageSize,
-          });
-        return { props: { authSession, friendRequestsResponse } };
-      } catch (error) {
-        return { props: { authSession } };
-      }
+      const queryClient = new QueryClient();
+      await queryClient.prefetchQuery([ReadStore.queryKeys.friendRequest], () =>
+        ReadStore.FriendRequest.GetMany.apiCall({
+          filter: { a: { userId: authSession!.user.id } },
+          page: 1,
+          pageSize: 20,
+        })
+      );
+      return {
+        props: { authSession, dehydratedState: dehydrate(queryClient) },
+      };
     }
   }
   return { redirect: { destination: "/", permanent: true } };
