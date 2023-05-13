@@ -1,5 +1,5 @@
 import NavBar from "@/components/navbar";
-import { EventStore, ReadStore } from "@/external-apis";
+import { EventStore, PaginationResponse, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import WindImg from "@/public/wind.png";
@@ -12,6 +12,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { produce } from "immer";
 import { GetServerSideProps } from "next";
 import Image from "next/image";
 import { NextRouter, useRouter } from "next/router";
@@ -90,6 +91,7 @@ const FriendRequestsPage: NextPageWithLayout<FriendRequestsPageProps> = (
                     authSession={props.authSession}
                     router={router}
                     friendRequest={x}
+                    page={page}
                   />
                 ))}
               </div>
@@ -137,7 +139,7 @@ export const getServerSideProps: GetServerSideProps<
           ReadStore.FriendRequest.GetMany.apiCall({
             filter: { a: { userId: authSession!.user.id } },
             page: 1,
-            pageSize: 20,
+            pageSize,
           })
       );
       return {
@@ -152,6 +154,7 @@ type FriendRequestCardProps = {
   friendRequest: ReadStore.FriendRequest.FriendRequestModel;
   authSession: Session;
   router: NextRouter;
+  page: number;
 };
 
 const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
@@ -163,6 +166,19 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
         request,
         props.authSession.access_token
       ),
+    onSuccess: (_, request) => {
+      queryClient.setQueryData<
+        PaginationResponse<ReadStore.FriendRequest.FriendRequestModel>
+      >(ReadStore.queryKeys.myFriendRequestsPage(props.page), (old) => {
+        if (old === undefined) return old;
+        return produce(old, (draft) => {
+          const idx = draft.data.findIndex(
+            (x) => x.id === request.friendRequestId
+          );
+          if (idx !== -1) draft.data.splice(idx, 1);
+        });
+      });
+    },
   });
 
   const myUserId = props.authSession.user.id;
@@ -183,21 +199,9 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
     ? props.friendRequest.toUser.alias
     : props.friendRequest.fromUser.alias;
 
-  //   props.friendRequest.profilePictureUrl == undefined
-  //     ? AnonymousProfilePicture
-  //     : props.friendRequest.;
-
-  // const apiSendFriendRequest = useMutation({
-  //   mutationFn: (request: EventStore.FriendRequest.Send.Request) => {
-  //     return EventStore.FriendRequest.Send.apiCall(
-  //       request,
-  //       props.authSession.access_token
-  //     );
-  //   },
-  // });
-  const onSendFriendRequestClicked = () => () => {
-    // apiSendFriendRequest.mutate({ toUserId: props.user.id });
-  };
+  const friendRequestCardLoading = apiCancelFriendRequest.isLoading
+    ? "loading"
+    : "";
 
   const onCancelFriendRequestClicked = () => {
     apiCancelFriendRequest.mutate({ friendRequestId: props.friendRequest.id });
@@ -223,7 +227,7 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
         <div className="flex-1 flex justify-end">
           {amIFromUser ? (
             <button
-              className="btn btn-ghost text-secondary"
+              className={`btn btn-ghost text-secondary ${friendRequestCardLoading}`}
               onClick={onCancelFriendRequestClicked}
             >
               Cancel Friend Request

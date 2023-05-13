@@ -145,7 +145,7 @@ const InfoForm = (props: InfoFormProps) => {
               }}
             />
             <label className="label">
-              <span className="label-text-alt text-red min-h-1">
+              <span className="label-text-alt text-secondary min-h-1">
                 {nameError}
               </span>
             </label>
@@ -165,7 +165,7 @@ const InfoForm = (props: InfoFormProps) => {
               }}
             />
             <label className="label">
-              <span className="label-text-alt text-red min-h-1">
+              <span className="label-text-alt text-secondary min-h-1">
                 {aliasError}
               </span>
             </label>
@@ -192,13 +192,13 @@ const InfoForm = (props: InfoFormProps) => {
               }}
             />
             <label className="label">
-              <span className="label-text-alt text-red min-h-1">
+              <span className="label-text-alt text-secondary min-h-1">
                 {profilePictureError}
               </span>
             </label>
           </div>
 
-          <div className="text-red">{apiMutationError}</div>
+          <div className="text-secondary">{apiMutationError}</div>
 
           <div className="modal-action">
             <button

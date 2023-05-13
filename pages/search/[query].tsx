@@ -11,6 +11,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { produce } from "immer";
 import { GetServerSideProps } from "next";
 import Image from "next/image";
 import { NextRouter, useRouter } from "next/router";
@@ -194,11 +195,13 @@ const UserFoundCard = (props: UserFoundCardProps) => {
       queryClient.setQueryData<PaginationResponse<ReadStore.User.UserModel>>(
         ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
         (old) => {
-          const user = old!.data.find((x) => x.id === request.toUserId);
-          if (user !== undefined)
-            user.relationshipWithUser!.pendingFriendRequestId =
-              response.friendRequestId;
-          return old;
+          if (old === undefined) return old;
+          return produce(old, (draft) => {
+            const user = draft.data.find((x) => x.id === request.toUserId);
+            if (user !== undefined)
+              user.relationshipWithUser!.pendingFriendRequestId =
+                response.friendRequestId;
+          });
         }
       );
     },
@@ -214,14 +217,16 @@ const UserFoundCard = (props: UserFoundCardProps) => {
       queryClient.setQueryData<PaginationResponse<ReadStore.User.UserModel>>(
         ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
         (old) => {
-          const user = old!.data.find(
-            (x) =>
-              x.relationshipWithUser?.pendingFriendRequestId ===
-              request.friendRequestId
-          );
-          if (user !== undefined)
-            user.relationshipWithUser!.pendingFriendRequestId = null;
-          return old;
+          if (old === undefined) return old;
+          return produce(old, (draft) => {
+            const user = draft.data.find(
+              (x) =>
+                x.relationshipWithUser?.pendingFriendRequestId ===
+                request.friendRequestId
+            );
+            if (user !== undefined)
+              user.relationshipWithUser!.pendingFriendRequestId = null;
+          });
         }
       );
     },
@@ -234,6 +239,11 @@ const UserFoundCard = (props: UserFoundCardProps) => {
   const isFriendRequestPendingForUser =
     props.user.relationshipWithUser?.pendingFriendRequestId !== null;
 
+  const userCardBtnLoading =
+    apiCancelFriendRequest.isLoading || apiSendFriendRequest.isLoading
+      ? "loading"
+      : "";
+
   const userCardBtnText = isFriendRequestPendingForUser
     ? "Cancel Friend Request"
     : !isFoundUserFriend
@@ -241,7 +251,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
     : "";
 
   const userCardBtnTxtColor = isFriendRequestPendingForUser
-    ? "text-red"
+    ? "text-secondary"
     : !isFoundUserFriend
     ? "text-primary"
     : "";
@@ -286,7 +296,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         {!isFoundUserLoggedUser && (
           <div className="flex-1 flex justify-end">
             <button
-              className={`btn btn-ghost ${userCardBtnTxtColor}`}
+              className={`btn btn-ghost ${userCardBtnLoading} ${userCardBtnTxtColor}`}
               onClick={onUserCardBtnClicked}
             >
               {userCardBtnText}
