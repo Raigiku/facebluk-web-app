@@ -17,7 +17,7 @@ const NavBar = (props: NavBarProps) => {
   const supabase = useSupabaseClient();
 
   const apiUser = useQuery({
-    queryKey: [ReadStore.queryKeys.user, props.userId],
+    queryKey: ReadStore.queryKeys.userById(props.userId),
     queryFn: () =>
       ReadStore.User.GetOne.apiCall({ filter: { a: { id: props.userId } } }),
   });

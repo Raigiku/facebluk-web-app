@@ -33,7 +33,7 @@ const FriendRequestsPage: NextPageWithLayout<FriendRequestsPageProps> = (
   const [page, setPage] = useState(1);
 
   const apiFriendRequests = useQuery({
-    queryKey: [ReadStore.queryKeys.friendRequest, page],
+    queryKey: ReadStore.queryKeys.myFriendRequestsPage(page),
     queryFn: () =>
       ReadStore.FriendRequest.GetMany.apiCall({
         filter: { a: { userId } },
@@ -131,12 +131,14 @@ export const getServerSideProps: GetServerSideProps<
 
     if (authSession !== undefined) {
       const queryClient = new QueryClient();
-      await queryClient.prefetchQuery([ReadStore.queryKeys.friendRequest], () =>
-        ReadStore.FriendRequest.GetMany.apiCall({
-          filter: { a: { userId: authSession!.user.id } },
-          page: 1,
-          pageSize: 20,
-        })
+      await queryClient.prefetchQuery(
+        ReadStore.queryKeys.myFriendRequestsPage(1),
+        () =>
+          ReadStore.FriendRequest.GetMany.apiCall({
+            filter: { a: { userId: authSession!.user.id } },
+            page: 1,
+            pageSize: 20,
+          })
       );
       return {
         props: { authSession, dehydratedState: dehydrate(queryClient) },
@@ -156,17 +158,11 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
   const queryClient = useQueryClient();
 
   const apiCancelFriendRequest = useMutation({
-    mutationFn: (request: EventStore.FriendRequest.Cancel.Request) => {
-      return EventStore.FriendRequest.Cancel.apiCall(
+    mutationFn: (request: EventStore.FriendRequest.Cancel.Request) =>
+      EventStore.FriendRequest.Cancel.apiCall(
         request,
         props.authSession.access_token
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [ReadStore.queryKeys.friendRequest],
-      });
-    },
+      ),
   });
 
   const myUserId = props.authSession.user.id;

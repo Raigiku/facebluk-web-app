@@ -2,9 +2,9 @@ import axios from "axios";
 import { EVENT_STORE_API_URL } from "..";
 
 export type Request = {
-  readonly name: string;
-  readonly alias: string;
-  readonly profilePicture: File | null;
+  name: string;
+  alias: string;
+  profilePicture: File | null;
 };
 
 export const apiCall = (request: Request, bearerToken: string) => {

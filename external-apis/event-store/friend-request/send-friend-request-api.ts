@@ -2,7 +2,11 @@ import axios from "axios";
 import { EVENT_STORE_API_URL } from "..";
 
 export type Request = {
-  readonly toUserId: string
+  toUserId: string;
+};
+
+export type Response = {
+  friendRequestId: string;
 };
 
 export const apiCall = (request: Request, bearerToken: string) => {
@@ -11,5 +15,5 @@ export const apiCall = (request: Request, bearerToken: string) => {
       headers: { Authorization: `Bearer ${bearerToken}` },
       baseURL: EVENT_STORE_API_URL,
     })
-    .then((res) => res.data);
+    .then((res) => res.data as Response);
 };

@@ -9,7 +9,13 @@ export const READ_STORE_API_URL =
       })();
 
 export const queryKeys = {
-  friendRequest: "friend-request",
-  user: "user",
-  searchUser: "search-user",
+  usersKey: "users" as const,
+  userById: (userId: string) => [queryKeys.usersKey, userId] as const,
+  userByAlias: (alias: string) => [queryKeys.usersKey, alias] as const,
+  usersBySearchQuery: (searchQuery: string, page: number) =>
+    [queryKeys.usersKey, searchQuery, page] as const,
+
+  friendRequestsKey: "friend-requests" as const,
+  myFriendRequestsPage: (page: number) =>
+    [queryKeys.friendRequestsKey, page] as const,
 };

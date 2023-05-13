@@ -4,11 +4,11 @@ import { FriendRequestModel } from ".";
 import { READ_STORE_API_URL } from "..";
 
 export type Params = {
-  readonly filter: {
-    readonly a?: { readonly userId: string };
+  filter: {
+    a?: { userId: string };
   };
-  readonly page: number;
-  readonly pageSize: number;
+  page: number;
+  pageSize: number;
 };
 
 export const apiCall = (

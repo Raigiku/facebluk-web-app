@@ -4,11 +4,11 @@ import { UserModel } from ".";
 import { READ_STORE_API_URL } from "..";
 
 export type Params = {
-  readonly filter: {
-    readonly a?: { readonly searchQuery: string; readonly userId: string };
+  filter: {
+    a?: { searchQuery: string; userId: string };
   };
-  readonly page: number;
-  readonly pageSize: number;
+  page: number;
+  pageSize: number;
 };
 
 export const apiCall = (
@@ -27,7 +27,7 @@ export const apiCall = (
             profilePictureUrl
             relationshipWithUser {
               isFriend
-              isFriendRequestPending
+              pendingFriendRequestId
             }
           }
         }

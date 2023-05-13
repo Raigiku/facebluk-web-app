@@ -1,10 +1,10 @@
 export type UserModel = {
-  readonly id: string;
-  readonly alias: string;
-  readonly name: string;
-  readonly profilePictureUrl: string | null;
-  readonly relationshipWithUser: {
-    readonly isBlocked: boolean;
-    readonly isFriend: boolean;
+  id: string;
+  alias: string;
+  name: string;
+  profilePictureUrl: string | null;
+  relationshipWithUser: {
+    isFriend: boolean;
+    pendingFriendRequestId: string | null;
   } | null;
 };

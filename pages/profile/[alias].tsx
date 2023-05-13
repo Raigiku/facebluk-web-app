@@ -21,7 +21,7 @@ const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
   const userAlias = router.query.alias as string;
 
   const apiUser = useQuery({
-    queryKey: [ReadStore.queryKeys.user, userAlias],
+    queryKey: ReadStore.queryKeys.userByAlias(userAlias),
     queryFn: () =>
       ReadStore.User.GetOne.apiCall({
         filter: { b: { alias: userAlias } },
@@ -87,12 +87,10 @@ export const getServerSideProps: GetServerSideProps<ProfilePageProps> = async (
     if (authSession !== undefined) {
       const queryClient = new QueryClient();
       const aliasQuery = ctx.query.alias as string;
-      await queryClient.prefetchQuery(
-        [ReadStore.queryKeys.user, aliasQuery],
-        () =>
-          ReadStore.User.GetOne.apiCall({
-            filter: { b: { alias: aliasQuery } },
-          })
+      await queryClient.prefetchQuery(ReadStore.queryKeys.userByAlias(aliasQuery), () =>
+        ReadStore.User.GetOne.apiCall({
+          filter: { b: { alias: aliasQuery } },
+        })
       );
       return {
         props: { authSession, dehydratedState: dehydrate(queryClient) },

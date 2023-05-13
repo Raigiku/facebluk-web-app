@@ -1,3 +1,3 @@
 export type FaceblukApiError = {
-  readonly message: string;
+  message: string;
 };

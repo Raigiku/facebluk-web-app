@@ -1,5 +1,5 @@
 import NavBar from "@/components/navbar";
-import { EventStore, ReadStore } from "@/external-apis";
+import { EventStore, PaginationResponse, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
@@ -33,7 +33,7 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
   const [page, setPage] = useState(1);
 
   const apiSearchQuery = useQuery({
-    queryKey: [ReadStore.queryKeys.searchUser, searchQuery, page],
+    queryKey: ReadStore.queryKeys.usersBySearchQuery(searchQuery, page),
     queryFn: () =>
       ReadStore.User.GetMany.apiCall({
         filter: { a: { searchQuery, userId: props.authSession.user.id } },
@@ -105,6 +105,8 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
                         user={user}
                         authSession={props.authSession}
                         router={router}
+                        page={page}
+                        searchQuery={searchQuery}
                       />
                     ))}
                   </>
@@ -150,7 +152,7 @@ export const getServerSideProps: GetServerSideProps<SearchPageProps> = async (
       const queryClient = new QueryClient();
       const searchQuery = ctx.query.query as string;
       await queryClient.prefetchQuery(
-        [ReadStore.queryKeys.searchUser, searchQuery, 1],
+        ReadStore.queryKeys.usersBySearchQuery(searchQuery, 1),
         () =>
           ReadStore.User.GetMany.apiCall({
             filter: { a: { searchQuery, userId: authSession!.user.id } },
@@ -170,6 +172,8 @@ type UserFoundCardProps = {
   user: ReadStore.User.UserModel;
   authSession: Session;
   router: NextRouter;
+  searchQuery: string;
+  page: number;
 };
 
 const UserFoundCard = (props: UserFoundCardProps) => {
@@ -181,31 +185,89 @@ const UserFoundCard = (props: UserFoundCardProps) => {
   const queryClient = useQueryClient();
 
   const apiSendFriendRequest = useMutation({
-    mutationFn: (request: EventStore.FriendRequest.Send.Request) => {
-      return EventStore.FriendRequest.Send.apiCall(
+    mutationFn: (request: EventStore.FriendRequest.Send.Request) =>
+      EventStore.FriendRequest.Send.apiCall(
         request,
         props.authSession.access_token
+      ),
+    onSuccess: (response, request) => {
+      queryClient.setQueryData<PaginationResponse<ReadStore.User.UserModel>>(
+        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
+        (old) => {
+          const user = old!.data.find((x) => x.id === request.toUserId);
+          if (user !== undefined)
+            user.relationshipWithUser!.pendingFriendRequestId =
+              response.friendRequestId;
+          return old;
+        }
       );
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: [ReadStore.queryKeys.friendRequest],
-      });
+  });
+
+  const apiCancelFriendRequest = useMutation({
+    mutationFn: (request: EventStore.FriendRequest.Cancel.Request) =>
+      EventStore.FriendRequest.Cancel.apiCall(
+        request,
+        props.authSession.access_token
+      ),
+    onSuccess: (_, request) => {
+      queryClient.setQueryData<PaginationResponse<ReadStore.User.UserModel>>(
+        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
+        (old) => {
+          const user = old!.data.find(
+            (x) =>
+              x.relationshipWithUser?.pendingFriendRequestId ===
+              request.friendRequestId
+          );
+          if (user !== undefined)
+            user.relationshipWithUser!.pendingFriendRequestId = null;
+          return old;
+        }
+      );
     },
   });
 
   const isFoundUserLoggedUser = props.user.id === props.authSession.user.id;
 
-  const onViewProfileClicked = () => {
+  const isFoundUserFriend = props.user.relationshipWithUser?.isFriend === true;
+
+  const isFriendRequestPendingForUser =
+    props.user.relationshipWithUser?.pendingFriendRequestId !== null;
+
+  const userCardBtnText = isFriendRequestPendingForUser
+    ? "Cancel Friend Request"
+    : !isFoundUserFriend
+    ? "Add Friend"
+    : "";
+
+  const userCardBtnTxtColor = isFriendRequestPendingForUser
+    ? "text-red"
+    : !isFoundUserFriend
+    ? "text-primary"
+    : "";
+
+  const onUserCardClicked = () => {
     props.router.push(`/profile/${props.user.alias}`);
   };
 
-  const onSendFriendRequestClicked = () => {
-    apiSendFriendRequest.mutate({ toUserId: props.user.id });
+  const onUserCardBtnClicked = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isFriendRequestPendingForUser)
+      apiCancelFriendRequest.mutate({
+        friendRequestId:
+          props.user.relationshipWithUser!.pendingFriendRequestId!,
+      });
+    else if (!isFoundUserFriend)
+      apiSendFriendRequest.mutate({
+        toUserId: props.user.id,
+      });
   };
 
   return (
-    <div className="card card-compact bg-base-100 shadow-lg">
+    <div
+      className="card card-compact bg-base-100 shadow-lg hover:bg-base-200 transition-colors cursor-pointer"
+      onClick={onUserCardClicked}
+    >
       <div className="card-body flex flex-row gap-4 items-center">
         <div className="avatar">
           <div className="w-20 rounded-full">
@@ -220,20 +282,17 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         <div className="flex flex-col">
           <div className="text-base font-medium">{props.user.name}</div>
           <div className="italic">@{props.user.alias}</div>
-          <div>{JSON.stringify(props.user.relationshipWithUser)}</div>
         </div>
-        <div className="flex-1 flex justify-end">
-          <button
-            className="btn btn-ghost"
-            onClick={
-              isFoundUserLoggedUser
-                ? onViewProfileClicked
-                : onSendFriendRequestClicked
-            }
-          >
-            {isFoundUserLoggedUser ? "View Profile" : "Add Friend"}
-          </button>
-        </div>
+        {!isFoundUserLoggedUser && (
+          <div className="flex-1 flex justify-end">
+            <button
+              className={`btn btn-ghost ${userCardBtnTxtColor}`}
+              onClick={onUserCardBtnClicked}
+            >
+              {userCardBtnText}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

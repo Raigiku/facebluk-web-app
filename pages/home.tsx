@@ -58,12 +58,8 @@ const InfoForm = (props: InfoFormProps) => {
   const [apiMutationError, setApiMutationError] = useState("");
 
   const apiSubmitUserRegister = useMutation({
-    mutationFn: (request: EventStore.User.Register.Request) => {
-      return EventStore.User.Register.apiCall(
-        request,
-        props.authSession.access_token
-      );
-    },
+    mutationFn: (request: EventStore.User.Register.Request) =>
+      EventStore.User.Register.apiCall(request, props.authSession.access_token),
     onSuccess: () => {
       setIsInfoModalActive(false);
       setApiMutationError("");
@@ -149,7 +145,7 @@ const InfoForm = (props: InfoFormProps) => {
               }}
             />
             <label className="label">
-              <span className="label-text-alt text-red-500 min-h-1">
+              <span className="label-text-alt text-red min-h-1">
                 {nameError}
               </span>
             </label>
@@ -169,7 +165,7 @@ const InfoForm = (props: InfoFormProps) => {
               }}
             />
             <label className="label">
-              <span className="label-text-alt text-red-500 min-h-1">
+              <span className="label-text-alt text-red min-h-1">
                 {aliasError}
               </span>
             </label>
@@ -196,13 +192,13 @@ const InfoForm = (props: InfoFormProps) => {
               }}
             />
             <label className="label">
-              <span className="label-text-alt text-red-500 min-h-1">
+              <span className="label-text-alt text-red min-h-1">
                 {profilePictureError}
               </span>
             </label>
           </div>
 
-          <div className="text-red-500">{apiMutationError}</div>
+          <div className="text-red">{apiMutationError}</div>
 
           <div className="modal-action">
             <button

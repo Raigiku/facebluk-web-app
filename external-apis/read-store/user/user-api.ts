@@ -3,9 +3,9 @@ import { UserModel } from ".";
 import { READ_STORE_API_URL } from "..";
 
 export type Params = {
-  readonly filter: {
-    readonly a?: { readonly id: string };
-    readonly b?: { readonly alias: string };
+  filter: {
+    a?: { id: string };
+    b?: { alias: string };
   };
 };
 
@@ -23,5 +23,5 @@ export const apiCall = (params: Params): Promise<UserModel | null> => {
       }
     `,
     params
-    ).then((res: any) => res.user);
+  ).then((res: any) => res.user);
 };
