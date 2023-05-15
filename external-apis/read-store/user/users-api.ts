@@ -17,7 +17,7 @@ export const apiCall = (
   return request(
     READ_STORE_API_URL,
     gql`
-      query Users($filter: UsersFilter!, $page: Int!, $pageSize: Int!) {
+      query User($filter: UsersFilter!, $page: Int!, $pageSize: Int!) {
         users(filter: $filter, page: $page, pageSize: $pageSize) {
           totalPages
           data {
@@ -27,7 +27,10 @@ export const apiCall = (
             profilePictureUrl
             relationshipWithUser {
               isFriend
-              pendingFriendRequestId
+              pendingFriendRequest {
+                id
+                isRequestUserReceiver
+              }
             }
           }
         }

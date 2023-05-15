@@ -1,10 +1,13 @@
 export type UserModel = {
   id: string;
-  alias: string;
   name: string;
+  alias: string;
   profilePictureUrl: string | null;
   relationshipWithUser: {
     isFriend: boolean;
-    pendingFriendRequestId: string | null;
-  } | null;
+    pendingFriendRequest: {
+      id: string;
+      isRequestUserReceiver: boolean;
+    } | null;
+  };
 };

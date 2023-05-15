@@ -19,6 +19,13 @@ export const apiCall = (params: Params): Promise<UserModel | null> => {
           name
           alias
           profilePictureUrl
+          relationshipWithUser {
+            isFriend
+            pendingFriendRequest {
+              id
+              isRequestUserReceiver
+            }
+          }
         }
       }
     `,

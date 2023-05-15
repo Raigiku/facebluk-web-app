@@ -199,7 +199,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
           return produce(old, (draft) => {
             const user = draft.data.find((x) => x.id === request.toUserId);
             if (user !== undefined)
-              user.relationshipWithUser!.pendingFriendRequestId =
+              user.relationshipWithUser.pendingFriendRequest!.id =
                 response.friendRequestId;
           });
         }
@@ -221,11 +221,11 @@ const UserFoundCard = (props: UserFoundCardProps) => {
           return produce(old, (draft) => {
             const user = draft.data.find(
               (x) =>
-                x.relationshipWithUser?.pendingFriendRequestId ===
+                x.relationshipWithUser.pendingFriendRequest?.id ===
                 request.friendRequestId
             );
             if (user !== undefined)
-              user.relationshipWithUser!.pendingFriendRequestId = null;
+              user.relationshipWithUser.pendingFriendRequest = null;
           });
         }
       );
@@ -234,10 +234,10 @@ const UserFoundCard = (props: UserFoundCardProps) => {
 
   const isFoundUserLoggedUser = props.user.id === props.authSession.user.id;
 
-  const isFoundUserFriend = props.user.relationshipWithUser?.isFriend === true;
+  const isFoundUserFriend = props.user.relationshipWithUser.isFriend === true;
 
   const isFriendRequestPendingForUser =
-    props.user.relationshipWithUser?.pendingFriendRequestId !== null;
+    props.user.relationshipWithUser.pendingFriendRequest !== null;
 
   const userCardBtnLoading =
     apiCancelFriendRequest.isLoading || apiSendFriendRequest.isLoading
@@ -265,7 +265,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
     if (isFriendRequestPendingForUser)
       apiCancelFriendRequest.mutate({
         friendRequestId:
-          props.user.relationshipWithUser!.pendingFriendRequestId!,
+          props.user.relationshipWithUser.pendingFriendRequest!.id,
       });
     else if (!isFoundUserFriend)
       apiSendFriendRequest.mutate({
@@ -293,7 +293,9 @@ const UserFoundCard = (props: UserFoundCardProps) => {
           <div className="text-base font-medium">{props.user.name}</div>
           <div className="italic">@{props.user.alias}</div>
         </div>
-        {!isFoundUserLoggedUser && (
+        {isFoundUserLoggedUser ? (
+          <></>
+        ) : isFoundUserFriend || isFriendRequestPendingForUser ? (
           <div className="flex-1 flex justify-end">
             <button
               className={`btn btn-ghost ${userCardBtnLoading} ${userCardBtnTxtColor}`}
@@ -302,6 +304,8 @@ const UserFoundCard = (props: UserFoundCardProps) => {
               {userCardBtnText}
             </button>
           </div>
+        ) : (
+          <div></div>
         )}
       </div>
     </div>

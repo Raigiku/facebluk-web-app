@@ -4,7 +4,6 @@ import {
   Session,
   createServerSupabaseClient,
 } from "@supabase/auth-helpers-nextjs";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { GetServerSideProps } from "next";
@@ -16,22 +15,11 @@ type HomePageProps = {
 };
 
 const HomePage = (props: HomePageProps) => {
-  const supabase = useSupabaseClient();
-
-  const onClickRefresh = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await supabase.auth.refreshSession();
-  };
-
   return (
     <>
       <NavBar userId={props.authSession.user.id} />
       <div className="flex-1 flex flex-col">
         <InfoForm authSession={props.authSession} />
-        <div>{props.authSession?.access_token}</div>
-        <button className="btn btn-primary" onClick={onClickRefresh}>
-          Refresh
-        </button>
       </div>
     </>
   );
