@@ -1,4 +1,3 @@
-import { ReadStore } from "@/external-apis";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useState } from "react";
@@ -12,18 +11,6 @@ const fetchPokemon = (name: string) => {
 };
 
 const TestPage = () => {
-  const apiFriendRequests = useQuery({
-    queryKey: ["friend-request"],
-    queryFn: () =>
-      ReadStore.FriendRequest.GetMany.apiCall({
-        filter: { a: { userId } },
-        page: 1,
-        pageSize: 20,
-      }),
-    enabled: false,
-    // initialData: page === 1 ? props.friendRequestsResponse : undefined,
-    // keepPreviousData: true,
-  });
   const [pokName, setPokName] = useState("ditto");
   const apiPokemon = useQuery({
     queryKey: ["pokemon", pokName],
@@ -45,7 +32,6 @@ const TestPage = () => {
           className="btn"
           onClick={() => {
             apiPokemon.refetch();
-            apiFriendRequests.refetch()
           }}
         >
           Search

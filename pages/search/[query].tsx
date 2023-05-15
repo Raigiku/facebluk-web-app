@@ -36,11 +36,14 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
   const apiSearchQuery = useQuery({
     queryKey: ReadStore.queryKeys.usersBySearchQuery(searchQuery, page),
     queryFn: () =>
-      ReadStore.User.GetMany.apiCall({
-        filter: { a: { searchQuery, userId: props.authSession.user.id } },
-        page,
-        pageSize,
-      }),
+      ReadStore.User.GetMany.apiCall(
+        {
+          filter: { a: { searchQuery } },
+          page,
+          pageSize,
+        },
+        props.authSession.access_token
+      ),
     keepPreviousData: true,
   });
 
@@ -64,6 +67,7 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
       <NavBar
         searchQuery={router.query.query as string}
         userId={props.authSession.user.id}
+        bearerToken={props.authSession.access_token}
       />
       <div className="flex-1 p-8 grid grid-cols-4">
         {apiSearchQuery.data === undefined ||
@@ -155,11 +159,14 @@ export const getServerSideProps: GetServerSideProps<SearchPageProps> = async (
       await queryClient.prefetchQuery(
         ReadStore.queryKeys.usersBySearchQuery(searchQuery, 1),
         () =>
-          ReadStore.User.GetMany.apiCall({
-            filter: { a: { searchQuery, userId: authSession!.user.id } },
-            page: 1,
-            pageSize,
-          })
+          ReadStore.User.GetMany.apiCall(
+            {
+              filter: { a: { searchQuery } },
+              page: 1,
+              pageSize,
+            },
+            authSession!.access_token
+          )
       );
       return {
         props: { authSession, dehydratedState: dehydrate(queryClient) },
@@ -199,8 +206,10 @@ const UserFoundCard = (props: UserFoundCardProps) => {
           return produce(old, (draft) => {
             const user = draft.data.find((x) => x.id === request.toUserId);
             if (user !== undefined)
-              user.relationshipWithUser.pendingFriendRequest!.id =
-                response.friendRequestId;
+              user.relationshipWithUser.pendingFriendRequest = {
+                id: response.friendRequestId,
+                isRequestUserReceiver: false,
+              };
           });
         }
       );
@@ -236,7 +245,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
 
   const isFoundUserFriend = props.user.relationshipWithUser.isFriend === true;
 
-  const isFriendRequestPendingForUser =
+  const isThereAPendingFriendRequest =
     props.user.relationshipWithUser.pendingFriendRequest !== null;
 
   const userCardBtnLoading =
@@ -244,13 +253,13 @@ const UserFoundCard = (props: UserFoundCardProps) => {
       ? "loading"
       : "";
 
-  const userCardBtnText = isFriendRequestPendingForUser
+  const userCardBtnText = isThereAPendingFriendRequest
     ? "Cancel Friend Request"
     : !isFoundUserFriend
     ? "Add Friend"
     : "";
 
-  const userCardBtnTxtColor = isFriendRequestPendingForUser
+  const userCardBtnTxtColor = isThereAPendingFriendRequest
     ? "text-secondary"
     : !isFoundUserFriend
     ? "text-primary"
@@ -262,7 +271,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
 
   const onUserCardBtnClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isFriendRequestPendingForUser)
+    if (isThereAPendingFriendRequest)
       apiCancelFriendRequest.mutate({
         friendRequestId:
           props.user.relationshipWithUser.pendingFriendRequest!.id,
@@ -295,7 +304,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         </div>
         {isFoundUserLoggedUser ? (
           <></>
-        ) : isFoundUserFriend || isFriendRequestPendingForUser ? (
+        ) : (
           <div className="flex-1 flex justify-end">
             <button
               className={`btn btn-ghost ${userCardBtnLoading} ${userCardBtnTxtColor}`}
@@ -304,8 +313,6 @@ const UserFoundCard = (props: UserFoundCardProps) => {
               {userCardBtnText}
             </button>
           </div>
-        ) : (
-          <div></div>
         )}
       </div>
     </div>

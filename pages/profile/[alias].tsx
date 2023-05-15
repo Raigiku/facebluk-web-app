@@ -23,9 +23,12 @@ const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
   const apiUser = useQuery({
     queryKey: ReadStore.queryKeys.userByAlias(userAlias),
     queryFn: () =>
-      ReadStore.User.GetOne.apiCall({
-        filter: { b: { alias: userAlias } },
-      }),
+      ReadStore.User.GetOne.apiCall(
+        {
+          filter: { b: { alias: userAlias } },
+        },
+        props.authSession.access_token
+      ),
   });
 
   const profilePicture =
@@ -33,7 +36,10 @@ const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
 
   return (
     <>
-      <NavBar userId={props.authSession.user.id} />
+      <NavBar
+        userId={props.authSession.user.id}
+        bearerToken={props.authSession.access_token}
+      />
       <div className="flex-1 flex">
         {apiUser.data == null ? (
           <div className="flex-1 flex flex-col justify-center items-center gap-2">
@@ -87,10 +93,15 @@ export const getServerSideProps: GetServerSideProps<ProfilePageProps> = async (
     if (authSession !== undefined) {
       const queryClient = new QueryClient();
       const aliasQuery = ctx.query.alias as string;
-      await queryClient.prefetchQuery(ReadStore.queryKeys.userByAlias(aliasQuery), () =>
-        ReadStore.User.GetOne.apiCall({
-          filter: { b: { alias: aliasQuery } },
-        })
+      await queryClient.prefetchQuery(
+        ReadStore.queryKeys.userByAlias(aliasQuery),
+        () =>
+          ReadStore.User.GetOne.apiCall(
+            {
+              filter: { b: { alias: aliasQuery } },
+            },
+            authSession!.access_token
+          )
       );
       return {
         props: { authSession, dehydratedState: dehydrate(queryClient) },

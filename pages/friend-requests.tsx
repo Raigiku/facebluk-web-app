@@ -36,11 +36,14 @@ const FriendRequestsPage: NextPageWithLayout<FriendRequestsPageProps> = (
   const apiFriendRequests = useQuery({
     queryKey: ReadStore.queryKeys.myFriendRequestsPage(page),
     queryFn: () =>
-      ReadStore.FriendRequest.GetMany.apiCall({
-        filter: { a: { userId } },
-        page,
-        pageSize,
-      }),
+      ReadStore.FriendRequest.GetMany.apiCall(
+        {
+          filter: { a: { placeholder: true } },
+          page,
+          pageSize,
+        },
+        props.authSession.access_token
+      ),
     keepPreviousData: true,
   });
 
@@ -64,7 +67,10 @@ const FriendRequestsPage: NextPageWithLayout<FriendRequestsPageProps> = (
 
   return (
     <>
-      <NavBar userId={props.authSession.user.id} />
+      <NavBar
+        userId={props.authSession.user.id}
+        bearerToken={props.authSession.access_token}
+      />
       <div className="flex-1 p-8 grid grid-cols-4">
         {apiErrorOrNoResults ? (
           <ErrorOrNoResultsFound errorOcurred={apiFriendRequests.isError} />
@@ -136,11 +142,14 @@ export const getServerSideProps: GetServerSideProps<
       await queryClient.prefetchQuery(
         ReadStore.queryKeys.myFriendRequestsPage(1),
         () =>
-          ReadStore.FriendRequest.GetMany.apiCall({
-            filter: { a: { userId: authSession!.user.id } },
-            page: 1,
-            pageSize,
-          })
+          ReadStore.FriendRequest.GetMany.apiCall(
+            {
+              filter: { a: { placeholder: true } },
+              page: 1,
+              pageSize,
+            },
+            authSession!.access_token
+          )
       );
       return {
         props: { authSession, dehydratedState: dehydrate(queryClient) },

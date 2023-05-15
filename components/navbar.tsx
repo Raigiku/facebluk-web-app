@@ -10,6 +10,7 @@ import { FaSearch } from "react-icons/fa";
 type NavBarProps = {
   searchQuery?: string;
   userId: string;
+  bearerToken: string;
 };
 
 const NavBar = (props: NavBarProps) => {
@@ -19,7 +20,10 @@ const NavBar = (props: NavBarProps) => {
   const apiUser = useQuery({
     queryKey: ReadStore.queryKeys.userById(props.userId),
     queryFn: () =>
-      ReadStore.User.GetOne.apiCall({ filter: { a: { id: props.userId } } }),
+      ReadStore.User.GetOne.apiCall(
+        { filter: { a: { id: props.userId } } },
+        props.bearerToken
+      ),
   });
 
   const onSearchUserSubmit = (e: React.FormEvent<HTMLFormElement>) => {

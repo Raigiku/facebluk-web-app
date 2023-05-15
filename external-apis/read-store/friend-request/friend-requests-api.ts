@@ -5,14 +5,15 @@ import { READ_STORE_API_URL } from "..";
 
 export type Params = {
   filter: {
-    a?: { userId: string };
+    a?: { placeholder: true };
   };
   page: number;
   pageSize: number;
 };
 
 export const apiCall = (
-  params: Params
+  params: Params,
+  bearerToken: string
 ): Promise<PaginationResponse<FriendRequestModel>> => {
   return request(
     READ_STORE_API_URL,
@@ -44,6 +45,7 @@ export const apiCall = (
         }
       }
     `,
-    params
+    params,
+    { authorization: `Bearer ${bearerToken}` }
   ).then((res: any) => res.friendRequests);
 };

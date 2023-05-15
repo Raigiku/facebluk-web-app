@@ -17,7 +17,10 @@ type HomePageProps = {
 const HomePage = (props: HomePageProps) => {
   return (
     <>
-      <NavBar userId={props.authSession.user.id} />
+      <NavBar
+        userId={props.authSession.user.id}
+        bearerToken={props.authSession.access_token}
+      />
       <div className="flex-1 flex flex-col">
         <InfoForm authSession={props.authSession} />
       </div>

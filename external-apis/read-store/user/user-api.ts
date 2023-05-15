@@ -9,7 +9,10 @@ export type Params = {
   };
 };
 
-export const apiCall = (params: Params): Promise<UserModel | null> => {
+export const apiCall = (
+  params: Params,
+  bearerToken: string
+): Promise<UserModel | null> => {
   return request(
     READ_STORE_API_URL,
     gql`
@@ -29,6 +32,7 @@ export const apiCall = (params: Params): Promise<UserModel | null> => {
         }
       }
     `,
-    params
+    params,
+    { authorization: `Bearer ${bearerToken}` }
   ).then((res: any) => res.user);
 };
