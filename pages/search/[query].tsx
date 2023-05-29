@@ -39,8 +39,10 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
       ReadStore.User.GetMany.apiCall(
         {
           filter: { a: { searchQuery } },
-          page,
-          pageSize,
+          pagination: {
+            page,
+            pageSize,
+          },
         },
         props.authSession.access_token
       ),
@@ -162,8 +164,10 @@ export const getServerSideProps: GetServerSideProps<SearchPageProps> = async (
           ReadStore.User.GetMany.apiCall(
             {
               filter: { a: { searchQuery } },
-              page: 1,
-              pageSize,
+              pagination: {
+                page: 1,
+                pageSize,
+              },
             },
             authSession!.access_token
           )
@@ -241,45 +245,123 @@ const UserFoundCard = (props: UserFoundCardProps) => {
     },
   });
 
-  const isFoundUserLoggedUser = props.user.id === props.authSession.user.id;
+  const apiAcceptFriendRequest = useMutation({
+    mutationFn: (request: EventStore.FriendRequest.Accept.Request) =>
+      EventStore.FriendRequest.Accept.apiCall(
+        request,
+        props.authSession.access_token
+      ),
+    onSuccess: (_, request) => {
+      queryClient.setQueryData<PaginationResponse<ReadStore.User.UserModel>>(
+        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
+        (old) => {
+          if (old === undefined) return old;
+          return produce(old, (draft) => {
+            const user = draft.data.find(
+              (x) =>
+                x.relationshipWithUser.pendingFriendRequest?.id ===
+                request.friendRequestId
+            );
+            if (user !== undefined) {
+              user.relationshipWithUser.pendingFriendRequest = null;
+              user.relationshipWithUser.isFriend = true;
+            }
+          });
+        }
+      );
+    },
+  });
+
+  const apiRejectFriendRequest = useMutation({
+    mutationFn: (request: EventStore.FriendRequest.Reject.Request) =>
+      EventStore.FriendRequest.Reject.apiCall(
+        request,
+        props.authSession.access_token
+      ),
+    onSuccess: (_, request) => {
+      queryClient.setQueryData<PaginationResponse<ReadStore.User.UserModel>>(
+        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
+        (old) => {
+          if (old === undefined) return old;
+          return produce(old, (draft) => {
+            const user = draft.data.find(
+              (x) =>
+                x.relationshipWithUser.pendingFriendRequest?.id ===
+                request.friendRequestId
+            );
+            if (user !== undefined)
+              user.relationshipWithUser.pendingFriendRequest = null;
+          });
+        }
+      );
+    },
+  });
+
+  const apiUnfriendUser = useMutation({
+    mutationFn: (request: EventStore.User.Unfriend.Request) =>
+      EventStore.User.Unfriend.apiCall(request, props.authSession.access_token),
+    onSuccess: (_, request) => {
+      queryClient.setQueryData<PaginationResponse<ReadStore.User.UserModel>>(
+        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
+        (old) => {
+          if (old === undefined) return old;
+          return produce(old, (draft) => {
+            const user = draft.data.find((x) => x.id === request.toUserId);
+            if (user !== undefined) user.relationshipWithUser.isFriend = false;
+          });
+        }
+      );
+    },
+  });
+
+  const isFoundUserRequestUser = props.user.id === props.authSession.user.id;
 
   const isFoundUserFriend = props.user.relationshipWithUser.isFriend === true;
 
   const isThereAPendingFriendRequest =
     props.user.relationshipWithUser.pendingFriendRequest !== null;
 
-  const userCardBtnLoading =
-    apiCancelFriendRequest.isLoading || apiSendFriendRequest.isLoading
-      ? "loading"
-      : "";
-
-  const userCardBtnText = isThereAPendingFriendRequest
-    ? "Cancel Friend Request"
-    : !isFoundUserFriend
-    ? "Add Friend"
-    : "";
-
-  const userCardBtnTxtColor = isThereAPendingFriendRequest
-    ? "text-secondary"
-    : !isFoundUserFriend
-    ? "text-primary"
-    : "";
+  const isRequestUserReceiverOfPendingFriendRequest =
+    props.user.relationshipWithUser.pendingFriendRequest
+      ?.isRequestUserReceiver ?? false;
 
   const onUserCardClicked = () => {
     props.router.push(`/profile/${props.user.alias}`);
   };
 
-  const onUserCardBtnClicked = (e: React.MouseEvent) => {
+  const onUserCardSendBtnClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isThereAPendingFriendRequest)
-      apiCancelFriendRequest.mutate({
-        friendRequestId:
-          props.user.relationshipWithUser.pendingFriendRequest!.id,
-      });
-    else if (!isFoundUserFriend)
-      apiSendFriendRequest.mutate({
-        toUserId: props.user.id,
-      });
+    apiSendFriendRequest.mutate({
+      toUserId: props.user.id,
+    });
+  };
+
+  const onUserCardUnfriendBtnClicked = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    apiUnfriendUser.mutate({
+      toUserId: props.user.id,
+    });
+  };
+
+  const onUserCardCancelBtnClicked = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    apiCancelFriendRequest.mutate({
+      friendRequestId: props.user.relationshipWithUser.pendingFriendRequest!.id,
+    });
+  };
+
+  const onUserCardAcceptBtnClicked = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    apiAcceptFriendRequest.mutate({
+      friendRequestId: props.user.relationshipWithUser.pendingFriendRequest!.id,
+    });
+  };
+
+  const onUserCardRejectBtnClicked = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    apiRejectFriendRequest.mutate({
+      friendRequestId: props.user.relationshipWithUser.pendingFriendRequest!.id,
+    });
   };
 
   return (
@@ -302,15 +384,61 @@ const UserFoundCard = (props: UserFoundCardProps) => {
           <div className="text-base font-medium">{props.user.name}</div>
           <div className="italic">@{props.user.alias}</div>
         </div>
-        {isFoundUserLoggedUser ? (
+
+        {isFoundUserRequestUser ? (
           <></>
+        ) : isThereAPendingFriendRequest ? (
+          isRequestUserReceiverOfPendingFriendRequest ? (
+            <div className="flex-1 flex justify-end">
+              <button
+                className={`btn btn-ghost text-primary ${
+                  apiAcceptFriendRequest.isLoading ? "loading" : ""
+                }`}
+                onClick={onUserCardAcceptBtnClicked}
+              >
+                Accept
+              </button>
+              <button
+                className={`btn btn-ghost text-secondary ${
+                  apiRejectFriendRequest.isLoading ? "loading" : ""
+                }`}
+                onClick={onUserCardRejectBtnClicked}
+              >
+                Reject
+              </button>
+            </div>
+          ) : (
+            <div className="flex-1 flex justify-end">
+              <button
+                className={`btn btn-ghost text-secondary ${
+                  apiCancelFriendRequest.isLoading ? "loading" : ""
+                }`}
+                onClick={onUserCardCancelBtnClicked}
+              >
+                Cancel Friend Request
+              </button>
+            </div>
+          )
+        ) : isFoundUserFriend ? (
+          <div className="flex-1 flex justify-end">
+            <button
+              className={`btn btn-ghost text-secondary ${
+                apiUnfriendUser.isLoading ? "loading" : ""
+              }`}
+              onClick={onUserCardUnfriendBtnClicked}
+            >
+              Unfriend
+            </button>
+          </div>
         ) : (
           <div className="flex-1 flex justify-end">
             <button
-              className={`btn btn-ghost ${userCardBtnLoading} ${userCardBtnTxtColor}`}
-              onClick={onUserCardBtnClicked}
+              className={`btn btn-ghost text-primary ${
+                apiSendFriendRequest.isLoading ? "loading" : ""
+              }`}
+              onClick={onUserCardSendBtnClicked}
             >
-              {userCardBtnText}
+              Add Friend
             </button>
           </div>
         )}

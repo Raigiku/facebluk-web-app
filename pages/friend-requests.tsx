@@ -39,8 +39,10 @@ const FriendRequestsPage: NextPageWithLayout<FriendRequestsPageProps> = (
       ReadStore.FriendRequest.GetMany.apiCall(
         {
           filter: { a: { placeholder: true } },
-          page,
-          pageSize,
+          pagination: {
+            page,
+            pageSize,
+          },
         },
         props.authSession.access_token
       ),
@@ -145,8 +147,10 @@ export const getServerSideProps: GetServerSideProps<
           ReadStore.FriendRequest.GetMany.apiCall(
             {
               filter: { a: { placeholder: true } },
-              page: 1,
-              pageSize,
+              pagination: {
+                page: 1,
+                pageSize,
+              },
             },
             authSession!.access_token
           )
@@ -190,6 +194,48 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
     },
   });
 
+  const apiAcceptFriendRequest = useMutation({
+    mutationFn: (request: EventStore.FriendRequest.Accept.Request) =>
+      EventStore.FriendRequest.Accept.apiCall(
+        request,
+        props.authSession.access_token
+      ),
+    onSuccess: (_, request) => {
+      queryClient.setQueryData<
+        PaginationResponse<ReadStore.FriendRequest.FriendRequestModel>
+      >(ReadStore.queryKeys.myFriendRequestsPage(props.page), (old) => {
+        if (old === undefined) return old;
+        return produce(old, (draft) => {
+          const idx = draft.data.findIndex(
+            (x) => x.id === request.friendRequestId
+          );
+          if (idx !== -1) draft.data.splice(idx, 1);
+        });
+      });
+    },
+  });
+
+  const apiRejectFriendRequest = useMutation({
+    mutationFn: (request: EventStore.FriendRequest.Reject.Request) =>
+      EventStore.FriendRequest.Reject.apiCall(
+        request,
+        props.authSession.access_token
+      ),
+    onSuccess: (_, request) => {
+      queryClient.setQueryData<
+        PaginationResponse<ReadStore.FriendRequest.FriendRequestModel>
+      >(ReadStore.queryKeys.myFriendRequestsPage(props.page), (old) => {
+        if (old === undefined) return old;
+        return produce(old, (draft) => {
+          const idx = draft.data.findIndex(
+            (x) => x.id === request.friendRequestId
+          );
+          if (idx !== -1) draft.data.splice(idx, 1);
+        });
+      });
+    },
+  });
+
   const myUserId = props.authSession.user.id;
 
   const amIFromUser = props.friendRequest.fromUser.id === myUserId;
@@ -208,12 +254,16 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
     ? props.friendRequest.toUser.alias
     : props.friendRequest.fromUser.alias;
 
-  const friendRequestCardLoading = apiCancelFriendRequest.isLoading
-    ? "loading"
-    : "";
-
   const onCancelFriendRequestClicked = () => {
     apiCancelFriendRequest.mutate({ friendRequestId: props.friendRequest.id });
+  };
+
+  const onAcceptFriendRequestClicked = () => {
+    apiAcceptFriendRequest.mutate({ friendRequestId: props.friendRequest.id });
+  };
+
+  const onRejectFriendRequestClicked = () => {
+    apiRejectFriendRequest.mutate({ friendRequestId: props.friendRequest.id });
   };
 
   return (
@@ -236,15 +286,31 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
         <div className="flex-1 flex justify-end">
           {amIFromUser ? (
             <button
-              className={`btn btn-ghost text-secondary ${friendRequestCardLoading}`}
+              className={`btn btn-ghost text-secondary ${
+                apiCancelFriendRequest.isLoading ? "loading" : ""
+              }`}
               onClick={onCancelFriendRequestClicked}
             >
               Cancel Friend Request
             </button>
           ) : (
             <div>
-              <button className="btn btn-ghost text-primary">Accept</button>
-              <button className="btn btn-ghost text-secondary">Reject</button>
+              <button
+                className={`btn btn-ghost text-primary ${
+                  apiAcceptFriendRequest.isLoading ? "loading" : ""
+                }`}
+                onClick={onAcceptFriendRequestClicked}
+              >
+                Accept
+              </button>
+              <button
+                className={`btn btn-ghost text-secondary ${
+                  apiRejectFriendRequest.isLoading ? "loading" : ""
+                }`}
+                onClick={onRejectFriendRequestClicked}
+              >
+                Reject
+              </button>
             </div>
           )}
         </div>

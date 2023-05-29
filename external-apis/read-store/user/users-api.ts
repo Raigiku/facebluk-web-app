@@ -7,8 +7,10 @@ export type Params = {
   filter: {
     a?: { searchQuery: string };
   };
-  page: number;
-  pageSize: number;
+  pagination: {
+    page: number;
+    pageSize: number;
+  };
 };
 
 export const apiCall = (
@@ -18,8 +20,8 @@ export const apiCall = (
   return request(
     READ_STORE_API_URL,
     gql`
-      query User($filter: UsersFilter!, $page: Int!, $pageSize: Int!) {
-        users(filter: $filter, page: $page, pageSize: $pageSize) {
+      query Users($filter: UsersFilter!, $pagination: Pagination!) {
+        users(filter: $filter, pagination: $pagination) {
           totalPages
           data {
             id

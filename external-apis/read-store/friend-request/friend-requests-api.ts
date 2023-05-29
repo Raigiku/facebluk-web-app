@@ -7,8 +7,10 @@ export type Params = {
   filter: {
     a?: { placeholder: true };
   };
-  page: number;
-  pageSize: number;
+  pagination: {
+    page: number;
+    pageSize: number;
+  };
 };
 
 export const apiCall = (
@@ -20,10 +22,9 @@ export const apiCall = (
     gql`
       query FriendRequests(
         $filter: FriendRequestsFilter!
-        $page: Int!
-        $pageSize: Int!
+        $pagination: Pagination!
       ) {
-        friendRequests(filter: $filter, page: $page, pageSize: $pageSize) {
+        friendRequests(filter: $filter, pagination: $pagination) {
           totalPages
           data {
             id
