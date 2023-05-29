@@ -254,20 +254,32 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
     ? props.friendRequest.toUser.alias
     : props.friendRequest.fromUser.alias;
 
-  const onCancelFriendRequestClicked = () => {
+  const onUserCardClicked = () => {
+    if (amIFromUser)
+      props.router.push(`/profile/${props.friendRequest.toUser.alias}`);
+    else props.router.push(`/profile/${props.friendRequest.fromUser.alias}`);
+  };
+
+  const onCancelFriendRequestBtnClicked = (e: React.MouseEvent) => {
+    e.stopPropagation();
     apiCancelFriendRequest.mutate({ friendRequestId: props.friendRequest.id });
   };
 
-  const onAcceptFriendRequestClicked = () => {
+  const onAcceptFriendRequestBtnClicked = (e: React.MouseEvent) => {
+    e.stopPropagation();
     apiAcceptFriendRequest.mutate({ friendRequestId: props.friendRequest.id });
   };
 
-  const onRejectFriendRequestClicked = () => {
+  const onRejectFriendRequestBtnClicked = (e: React.MouseEvent) => {
+    e.stopPropagation();
     apiRejectFriendRequest.mutate({ friendRequestId: props.friendRequest.id });
   };
 
   return (
-    <div className="card card-compact bg-base-100 shadow-lg">
+    <div
+      className="card card-compact bg-base-100 shadow-lg hover:bg-base-200 transition-colors cursor-pointer"
+      onClick={onUserCardClicked}
+    >
       <div className="card-body flex flex-row gap-4 items-center">
         <div className="avatar">
           <div className="w-20 rounded-full">
@@ -289,7 +301,7 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
               className={`btn btn-ghost text-secondary ${
                 apiCancelFriendRequest.isLoading ? "loading" : ""
               }`}
-              onClick={onCancelFriendRequestClicked}
+              onClick={onCancelFriendRequestBtnClicked}
             >
               Cancel Friend Request
             </button>
@@ -299,7 +311,7 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
                 className={`btn btn-ghost text-primary ${
                   apiAcceptFriendRequest.isLoading ? "loading" : ""
                 }`}
-                onClick={onAcceptFriendRequestClicked}
+                onClick={onAcceptFriendRequestBtnClicked}
               >
                 Accept
               </button>
@@ -307,7 +319,7 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
                 className={`btn btn-ghost text-secondary ${
                   apiRejectFriendRequest.isLoading ? "loading" : ""
                 }`}
-                onClick={onRejectFriendRequestClicked}
+                onClick={onRejectFriendRequestBtnClicked}
               >
                 Reject
               </button>
