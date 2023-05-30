@@ -30,7 +30,6 @@ const FriendRequestsPage: NextPageWithLayout<FriendRequestsPageProps> = (
   props: FriendRequestsPageProps
 ) => {
   const router = useRouter();
-  const userId = props.authSession.user.id;
   const [page, setPage] = useState(1);
 
   const apiFriendRequests = useQuery({

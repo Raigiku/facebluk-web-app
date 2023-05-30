@@ -6,6 +6,7 @@ import { READ_STORE_API_URL } from "..";
 export type Params = {
   filter: {
     a?: { searchQuery: string };
+    b?: { placeholder: boolean };
   };
   pagination: {
     page: number;

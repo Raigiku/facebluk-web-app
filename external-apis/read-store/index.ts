@@ -18,4 +18,7 @@ export const queryKeys = {
   friendRequestsKey: "friend-requests" as const,
   myFriendRequestsPage: (page: number) =>
     [queryKeys.friendRequestsKey, page] as const,
+
+  friendsKey: "friends" as const,
+  myFriends: (page: number) => [queryKeys.friendsKey, page] as const,
 };

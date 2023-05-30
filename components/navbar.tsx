@@ -41,6 +41,10 @@ const NavBar = (props: NavBarProps) => {
     router.push("/friend-requests");
   };
 
+  const onClickFriends = async () => {
+    router.push("/friends");
+  };
+
   const onClickLogout = async () => {
     await supabase.auth.signOut();
     router.push("/");
@@ -89,6 +93,9 @@ const NavBar = (props: NavBarProps) => {
           >
             <li onClick={onClickFriendRequests}>
               <a>Friend Requests</a>
+            </li>
+            <li onClick={onClickFriends}>
+              <a>Friends</a>
             </li>
             <li onClick={onClickLogout}>
               <div className="text-secondary">Sign Out</div>
