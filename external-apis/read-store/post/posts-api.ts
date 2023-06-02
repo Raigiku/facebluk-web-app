@@ -1,7 +1,7 @@
 import { Pagination } from "@/external-apis/common";
 import { gql, request } from "graphql-request";
-import { FriendRequestModel } from ".";
 import { READ_STORE_API_URL } from "..";
+import { PostModel } from "./post-model";
 
 export type Params = {
   filter: {
@@ -13,37 +13,26 @@ export type Params = {
 export const apiCall = (
   params: Params,
   bearerToken: string
-): Promise<Pagination.Response<FriendRequestModel>> => {
+): Promise<Pagination.Response<PostModel>> => {
   return request(
     READ_STORE_API_URL,
     gql`
-      query FriendRequests(
-        $filter: FriendRequestsFilter!
-        $pagination: Pagination!
-      ) {
-        friendRequests(filter: $filter, pagination: $pagination) {
+      query Posts($filter: PostsFilter!, $pagination: Pagination!) {
+        posts(filter: $filter, pagination: $pagination) {
           hasMoreData
           data {
             id
-            fromUser {
+            description
+            user {
               id
               name
-              alias
               profilePictureUrl
             }
-            toUser {
-              id
-              name
-              alias
-              profilePictureUrl
-            }
-            status
-            createdAt
           }
         }
       }
     `,
     params,
     { authorization: `Bearer ${bearerToken}` }
-  ).then((res: any) => res.friendRequests);
+  ).then((res: any) => res.posts);
 };

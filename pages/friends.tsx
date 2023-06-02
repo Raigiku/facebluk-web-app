@@ -1,16 +1,16 @@
 import NavBar from "@/components/navbar";
-import { EventStore, PaginationResponse, ReadStore } from "@/external-apis";
+import { EventStore, Pagination, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import WindImg from "@/public/wind.png";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { Session } from "@supabase/supabase-js";
 import {
-    QueryClient,
-    dehydrate,
-    useMutation,
-    useQuery,
-    useQueryClient,
+  QueryClient,
+  dehydrate,
+  useMutation,
+  useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
 import { produce } from "immer";
 import { GetServerSideProps } from "next";
@@ -35,7 +35,7 @@ const FriendsPage: NextPageWithLayout<FriendsPageProps> = (
   const apiFriends = useQuery({
     queryKey: ReadStore.queryKeys.myFriends(page),
     queryFn: () =>
-      ReadStore.User.GetMany.apiCall(
+      ReadStore.User.FindPaginated.apiCall(
         {
           filter: { b: { placeholder: true } },
           pagination: {
@@ -59,7 +59,7 @@ const FriendsPage: NextPageWithLayout<FriendsPageProps> = (
   const blurUsers = apiFriends.isPreviousData ? "blur" : "";
 
   const enableNextPageBtn =
-    apiFriends.data !== undefined ? page < apiFriends.data.totalPages : false;
+    apiFriends.data !== undefined ? apiFriends.data.hasMoreData : false;
 
   const apiErrorOrNoResults =
     apiFriends.isError || apiFriends.data?.data.length === 0;
@@ -139,7 +139,7 @@ export const getServerSideProps: GetServerSideProps<FriendsPageProps> = async (
     if (authSession !== undefined) {
       const queryClient = new QueryClient();
       await queryClient.prefetchQuery(ReadStore.queryKeys.myFriends(1), () =>
-        ReadStore.User.GetMany.apiCall(
+        ReadStore.User.FindPaginated.apiCall(
           {
             filter: { b: { placeholder: true } },
             pagination: {
@@ -172,7 +172,7 @@ const FriendFoundCard = (props: FriendCardProps) => {
     mutationFn: (request: EventStore.User.Unfriend.Request) =>
       EventStore.User.Unfriend.apiCall(request, props.authSession.access_token),
     onSuccess: (_, request) => {
-      queryClient.setQueryData<PaginationResponse<ReadStore.User.UserModel>>(
+      queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
         ReadStore.queryKeys.myFriends(props.page),
         (old) => {
           if (old === undefined) return old;

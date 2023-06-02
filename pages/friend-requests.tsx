@@ -1,5 +1,5 @@
 import NavBar from "@/components/navbar";
-import { EventStore, PaginationResponse, ReadStore } from "@/external-apis";
+import { EventStore, Pagination, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import WindImg from "@/public/wind.png";
@@ -35,7 +35,7 @@ const FriendRequestsPage: NextPageWithLayout<FriendRequestsPageProps> = (
   const apiFriendRequests = useQuery({
     queryKey: ReadStore.queryKeys.myFriendRequestsPage(page),
     queryFn: () =>
-      ReadStore.FriendRequest.GetMany.apiCall(
+      ReadStore.FriendRequest.FindPaginated.apiCall(
         {
           filter: { a: { placeholder: true } },
           pagination: {
@@ -60,7 +60,7 @@ const FriendRequestsPage: NextPageWithLayout<FriendRequestsPageProps> = (
 
   const enableNextPageBtn =
     apiFriendRequests.data !== undefined
-      ? page < apiFriendRequests.data.totalPages
+      ? apiFriendRequests.data.hasMoreData
       : false;
 
   const apiErrorOrNoResults =
@@ -143,7 +143,7 @@ export const getServerSideProps: GetServerSideProps<
       await queryClient.prefetchQuery(
         ReadStore.queryKeys.myFriendRequestsPage(1),
         () =>
-          ReadStore.FriendRequest.GetMany.apiCall(
+          ReadStore.FriendRequest.FindPaginated.apiCall(
             {
               filter: { a: { placeholder: true } },
               pagination: {
@@ -180,7 +180,7 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
       ),
     onSuccess: (_, request) => {
       queryClient.setQueryData<
-        PaginationResponse<ReadStore.FriendRequest.FriendRequestModel>
+        Pagination.Response<ReadStore.FriendRequest.FriendRequestModel>
       >(ReadStore.queryKeys.myFriendRequestsPage(props.page), (old) => {
         if (old === undefined) return old;
         return produce(old, (draft) => {
@@ -201,7 +201,7 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
       ),
     onSuccess: (_, request) => {
       queryClient.setQueryData<
-        PaginationResponse<ReadStore.FriendRequest.FriendRequestModel>
+        Pagination.Response<ReadStore.FriendRequest.FriendRequestModel>
       >(ReadStore.queryKeys.myFriendRequestsPage(props.page), (old) => {
         if (old === undefined) return old;
         return produce(old, (draft) => {
@@ -222,7 +222,7 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
       ),
     onSuccess: (_, request) => {
       queryClient.setQueryData<
-        PaginationResponse<ReadStore.FriendRequest.FriendRequestModel>
+        Pagination.Response<ReadStore.FriendRequest.FriendRequestModel>
       >(ReadStore.queryKeys.myFriendRequestsPage(props.page), (old) => {
         if (old === undefined) return old;
         return produce(old, (draft) => {

@@ -23,7 +23,7 @@ const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
   const apiUser = useQuery({
     queryKey: ReadStore.queryKeys.userByAlias(userAlias),
     queryFn: () =>
-      ReadStore.User.GetOne.apiCall(
+      ReadStore.User.FindOne.apiCall(
         {
           filter: { b: { alias: userAlias } },
         },
@@ -96,7 +96,7 @@ export const getServerSideProps: GetServerSideProps<ProfilePageProps> = async (
       await queryClient.prefetchQuery(
         ReadStore.queryKeys.userByAlias(aliasQuery),
         () =>
-          ReadStore.User.GetOne.apiCall(
+          ReadStore.User.FindOne.apiCall(
             {
               filter: { b: { alias: aliasQuery } },
             },

@@ -1,5 +1,5 @@
 import NavBar from "@/components/navbar";
-import { EventStore, PaginationResponse, ReadStore } from "@/external-apis";
+import { EventStore, Pagination, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
@@ -36,7 +36,7 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
   const apiSearchQuery = useQuery({
     queryKey: ReadStore.queryKeys.usersBySearchQuery(searchQuery, page),
     queryFn: () =>
-      ReadStore.User.GetMany.apiCall(
+      ReadStore.User.FindPaginated.apiCall(
         {
           filter: { a: { searchQuery } },
           pagination: {
@@ -60,9 +60,7 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
   const blurUsers = apiSearchQuery.isPreviousData ? "blur" : "";
 
   const enableNextPageBtn =
-    apiSearchQuery.data !== undefined
-      ? page < apiSearchQuery.data.totalPages
-      : false;
+    apiSearchQuery.data !== undefined ? apiSearchQuery.data.hasMoreData : false;
 
   return (
     <>
@@ -161,7 +159,7 @@ export const getServerSideProps: GetServerSideProps<SearchPageProps> = async (
       await queryClient.prefetchQuery(
         ReadStore.queryKeys.usersBySearchQuery(searchQuery, 1),
         () =>
-          ReadStore.User.GetMany.apiCall(
+          ReadStore.User.FindPaginated.apiCall(
             {
               filter: { a: { searchQuery } },
               pagination: {
@@ -203,7 +201,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         props.authSession.access_token
       ),
     onSuccess: (response, request) => {
-      queryClient.setQueryData<PaginationResponse<ReadStore.User.UserModel>>(
+      queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
         ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
         (old) => {
           if (old === undefined) return old;
@@ -227,7 +225,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         props.authSession.access_token
       ),
     onSuccess: (_, request) => {
-      queryClient.setQueryData<PaginationResponse<ReadStore.User.UserModel>>(
+      queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
         ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
         (old) => {
           if (old === undefined) return old;
@@ -252,7 +250,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         props.authSession.access_token
       ),
     onSuccess: (_, request) => {
-      queryClient.setQueryData<PaginationResponse<ReadStore.User.UserModel>>(
+      queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
         ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
         (old) => {
           if (old === undefined) return old;
@@ -279,7 +277,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         props.authSession.access_token
       ),
     onSuccess: (_, request) => {
-      queryClient.setQueryData<PaginationResponse<ReadStore.User.UserModel>>(
+      queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
         ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
         (old) => {
           if (old === undefined) return old;
@@ -301,7 +299,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
     mutationFn: (request: EventStore.User.Unfriend.Request) =>
       EventStore.User.Unfriend.apiCall(request, props.authSession.access_token),
     onSuccess: (_, request) => {
-      queryClient.setQueryData<PaginationResponse<ReadStore.User.UserModel>>(
+      queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
         ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
         (old) => {
           if (old === undefined) return old;

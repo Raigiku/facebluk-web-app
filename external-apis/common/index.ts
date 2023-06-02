@@ -1,2 +1,2 @@
-export * from "./pagination-response";
+export * as Pagination from "./pagination";
 

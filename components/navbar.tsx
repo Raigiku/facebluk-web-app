@@ -20,7 +20,7 @@ const NavBar = (props: NavBarProps) => {
   const apiUser = useQuery({
     queryKey: ReadStore.queryKeys.userById(props.userId),
     queryFn: () =>
-      ReadStore.User.GetOne.apiCall(
+      ReadStore.User.FindOne.apiCall(
         { filter: { a: { id: props.userId } } },
         props.bearerToken
       ),

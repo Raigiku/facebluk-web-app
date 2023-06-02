@@ -1,4 +1,4 @@
-import { PaginationResponse } from "@/external-apis/common";
+import { Pagination } from "@/external-apis/common";
 import { gql, request } from "graphql-request";
 import { UserModel } from ".";
 import { READ_STORE_API_URL } from "..";
@@ -8,22 +8,19 @@ export type Params = {
     a?: { searchQuery: string };
     b?: { placeholder: boolean };
   };
-  pagination: {
-    page: number;
-    pageSize: number;
-  };
+  pagination: Pagination.Request;
 };
 
 export const apiCall = (
   params: Params,
   bearerToken: string
-): Promise<PaginationResponse<UserModel>> => {
+): Promise<Pagination.Response<UserModel>> => {
   return request(
     READ_STORE_API_URL,
     gql`
       query Users($filter: UsersFilter!, $pagination: Pagination!) {
         users(filter: $filter, pagination: $pagination) {
-          totalPages
+          hasMoreData
           data {
             id
             name
