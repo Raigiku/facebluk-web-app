@@ -297,29 +297,32 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
         <div className="flex-1 flex justify-end">
           {amIFromUser ? (
             <button
-              className={`btn btn-ghost text-secondary ${
-                apiCancelFriendRequest.isLoading ? "loading" : ""
-              }`}
+              className="btn btn-ghost text-secondary"
               onClick={onCancelFriendRequestBtnClicked}
             >
+              {apiCancelFriendRequest.isLoading && (
+                <span className="loading loading-spinner" />
+              )}
               Cancel Friend Request
             </button>
           ) : (
             <div>
               <button
-                className={`btn btn-ghost text-primary ${
-                  apiAcceptFriendRequest.isLoading ? "loading" : ""
-                }`}
+                className="btn btn-ghost text-primary"
                 onClick={onAcceptFriendRequestBtnClicked}
               >
+                {apiAcceptFriendRequest.isLoading && (
+                  <span className="loading loading-spinner" />
+                )}
                 Accept
               </button>
               <button
-                className={`btn btn-ghost text-secondary ${
-                  apiRejectFriendRequest.isLoading ? "loading" : ""
-                }`}
+                className="btn btn-ghost text-secondary"
                 onClick={onRejectFriendRequestBtnClicked}
               >
+                {apiRejectFriendRequest.isLoading && (
+                  <span className="loading loading-spinner" />
+                )}
                 Reject
               </button>
             </div>

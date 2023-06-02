@@ -219,11 +219,12 @@ const FriendFoundCard = (props: FriendCardProps) => {
         </div>
         <div className="flex-1 flex justify-end">
           <button
-            className={`btn btn-ghost text-secondary ${
-              apiUnfriend.isLoading ? "loading" : ""
-            }`}
+            className="btn btn-ghost text-secondary"
             onClick={onUnfriendBtnClicked}
           >
+            {apiUnfriend.isLoading && (
+              <span className="loading loading-spinner" />
+            )}
             Unfriend
           </button>
         </div>

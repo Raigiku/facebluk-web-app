@@ -389,30 +389,33 @@ const UserFoundCard = (props: UserFoundCardProps) => {
           isRequestUserReceiverOfPendingFriendRequest ? (
             <div className="flex-1 flex justify-end">
               <button
-                className={`btn btn-ghost text-primary ${
-                  apiAcceptFriendRequest.isLoading ? "loading" : ""
-                }`}
+                className="btn btn-ghost text-primary"
                 onClick={onUserCardAcceptBtnClicked}
               >
+                {apiAcceptFriendRequest.isLoading && (
+                  <span className="loading loading-spinner" />
+                )}
                 Accept
               </button>
               <button
-                className={`btn btn-ghost text-secondary ${
-                  apiRejectFriendRequest.isLoading ? "loading" : ""
-                }`}
+                className="btn btn-ghost text-secondary"
                 onClick={onUserCardRejectBtnClicked}
               >
+                {apiRejectFriendRequest.isLoading && (
+                  <span className="loading loading-spinner" />
+                )}
                 Reject
               </button>
             </div>
           ) : (
             <div className="flex-1 flex justify-end">
               <button
-                className={`btn btn-ghost text-secondary ${
-                  apiCancelFriendRequest.isLoading ? "loading" : ""
-                }`}
+                className="btn btn-ghost text-secondary"
                 onClick={onUserCardCancelBtnClicked}
               >
+                {apiCancelFriendRequest.isLoading && (
+                  <span className="loading loading-spinner" />
+                )}
                 Cancel Friend Request
               </button>
             </div>
@@ -420,22 +423,24 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         ) : isFoundUserFriend ? (
           <div className="flex-1 flex justify-end">
             <button
-              className={`btn btn-ghost text-secondary ${
-                apiUnfriendUser.isLoading ? "loading" : ""
-              }`}
+              className="btn btn-ghost text-secondary"
               onClick={onUserCardUnfriendBtnClicked}
             >
+              {apiUnfriendUser.isLoading && (
+                <span className="loading loading-spinner" />
+              )}
               Unfriend
             </button>
           </div>
         ) : (
           <div className="flex-1 flex justify-end">
             <button
-              className={`btn btn-ghost text-primary ${
-                apiSendFriendRequest.isLoading ? "loading" : ""
-              }`}
+              className="btn btn-ghost text-primary"
               onClick={onUserCardSendBtnClicked}
             >
+              {apiSendFriendRequest.isLoading && (
+                <span className="loading loading-spinner" />
+              )}
               Add Friend
             </button>
           </div>

@@ -1,10 +1,10 @@
 import NavBar from "@/components/navbar";
-import { EventStore } from "@/external-apis";
+import { EventStore, ReadStore } from "@/external-apis";
 import {
   Session,
   createServerSupabaseClient,
 } from "@supabase/auth-helpers-nextjs";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { GetServerSideProps } from "next";
 import { useEffect, useState } from "react";
@@ -15,6 +15,21 @@ type HomePageProps = {
 };
 
 const HomePage = (props: HomePageProps) => {
+  const apiPosts = useQuery({
+    queryKey: ReadStore.queryKeys.homePosts(1),
+    queryFn: () =>
+      ReadStore.Post.FindPaginated.apiCall(
+        {
+          filter: { a: { placeholder: true } },
+          pagination: {
+            page: 1,
+            pageSize: 20,
+          },
+        },
+        props.authSession.access_token
+      ),
+  });
+
   return (
     <>
       <NavBar
@@ -23,6 +38,23 @@ const HomePage = (props: HomePageProps) => {
       />
       <div className="flex-1 flex flex-col">
         <InfoForm authSession={props.authSession} />
+        <WritePostForm authSession={props.authSession} />
+
+        <div className="flex-1 flex flex-col items-center p-2 gap-2">
+          <button
+            className=" btn btn-primary btn-outline"
+            onClick={() => (window as any).post_modal.showModal()}
+          >
+            Write a Post 🚀
+          </button>
+          <div className="flex flex-col">
+            {apiPosts.data?.data.map((post) => (
+              <div key={post.id}>
+                <div>{post.description}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </>
   );
@@ -104,10 +136,6 @@ const InfoForm = (props: InfoFormProps) => {
 
   const disableFormSubmitBtn =
     anyInputErrors || apiSubmitUserRegister.isLoading;
-
-  const submitFormBtnClass = `btn bg-primary border-transparent ${
-    apiSubmitUserRegister.isLoading ? "loading" : ""
-  }`;
 
   return (
     <>
@@ -193,16 +221,91 @@ const InfoForm = (props: InfoFormProps) => {
 
           <div className="modal-action">
             <button
-              className={submitFormBtnClass}
+              className="btn border-transparent"
               disabled={disableFormSubmitBtn}
               onClick={onClickSubmitForm}
             >
+              {apiSubmitUserRegister.isLoading && (
+                <span className="loading loading-spinner" />
+              )}
               Submit
             </button>
           </div>
         </div>
       </div>
     </>
+  );
+};
+
+type WritePostFormProps = {
+  authSession: Session;
+};
+
+const WritePostForm = (props: WritePostFormProps) => {
+  const [description, setDescription] = useState("");
+
+  const [apiMutationError, setApiMutationError] = useState("");
+
+  const apiSubmitPost = useMutation({
+    mutationFn: (request: EventStore.Post.Create.Request) =>
+      EventStore.Post.Create.apiCall(request, props.authSession.access_token),
+    onSuccess: () => {
+      (window as any).post_modal.close();
+      setApiMutationError("");
+    },
+    onError: (err) => {
+      if (err instanceof AxiosError) {
+        if (err.response !== undefined) {
+          const res = err.response.data as EventStore.FaceblukApiError;
+          setApiMutationError(res.message);
+        } else {
+          setApiMutationError(err.message);
+        }
+      }
+    },
+  });
+
+  const onClickSubmitForm = (e: React.MouseEvent) => {
+    e.preventDefault();
+    apiSubmitPost.mutate({ description });
+  };
+
+  const submitFormDisableClass =
+    apiSubmitPost.isLoading || description.length === 0 ? "btn-disabled" : "";
+
+  return (
+    <dialog id="post_modal" className="modal">
+      <form method="dialog" className="modal-box flex flex-col gap-4">
+        <h1 className="font-bold text-lg">What do you want to write?</h1>
+
+        <div className="form-control">
+          <textarea
+            className="textarea textarea-bordered h-64"
+            placeholder="Type here"
+            value={description}
+            onChange={(e) => {
+              setDescription(e.currentTarget.value);
+            }}
+          />
+        </div>
+
+        <div className="text-secondary">{apiMutationError}</div>
+
+        <button
+          className={`btn ${submitFormDisableClass}`}
+          onClick={onClickSubmitForm}
+        >
+          {apiSubmitPost.isLoading && (
+            <span className="loading loading-spinner" />
+          )}
+          Submit
+        </button>
+      </form>
+
+      <form method="dialog" className="modal-backdrop">
+        <button>close</button>
+      </form>
+    </dialog>
   );
 };
 
