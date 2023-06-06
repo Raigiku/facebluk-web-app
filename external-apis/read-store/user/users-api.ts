@@ -20,7 +20,7 @@ export const apiCall = (
     gql`
       query Users($filter: UsersFilter!, $pagination: Pagination!) {
         users(filter: $filter, pagination: $pagination) {
-          hasMoreData
+          nextPage
           data {
             id
             name

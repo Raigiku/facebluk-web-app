@@ -1,3 +1,4 @@
+import BottomNav from "@/components/bottom-nav";
 import NavBar from "@/components/navbar";
 import { EventStore, Pagination, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
@@ -7,23 +8,22 @@ import { Session } from "@supabase/supabase-js";
 import {
   QueryClient,
   dehydrate,
+  useInfiniteQuery,
   useMutation,
-  useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import { produce } from "immer";
 import { GetServerSideProps } from "next";
 import Image from "next/image";
 import { NextRouter, useRouter } from "next/router";
-import { useState } from "react";
-import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import React from "react";
 import { NextPageWithLayout } from "../_app";
 
 type SearchPageProps = {
   authSession: Session;
 };
 
-const pageSize = 5;
+const pageSize = 1;
 
 const SearchPage: NextPageWithLayout<SearchPageProps> = (
   props: SearchPageProps
@@ -31,48 +31,39 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
   const router = useRouter();
   const searchQuery = router.query.query as string;
 
-  const [page, setPage] = useState(1);
-
-  const apiSearchQuery = useQuery({
-    queryKey: ReadStore.queryKeys.usersBySearchQuery(searchQuery, page),
-    queryFn: () =>
+  const apiSearchQuery = useInfiniteQuery({
+    queryKey: ReadStore.queryKeys.usersBySearchQuery(searchQuery),
+    queryFn: ({ pageParam = 1 }) =>
       ReadStore.User.FindPaginated.apiCall(
         {
           filter: { a: { searchQuery } },
           pagination: {
-            page,
+            page: pageParam,
             pageSize,
           },
         },
         props.authSession.access_token
       ),
-    keepPreviousData: true,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 
-  const nextPageClicked = async () => {
-    setPage((prev) => prev + 1);
-  };
-
-  const prevPageClicked = () => {
-    setPage((prev) => prev - 1);
-  };
-
-  const blurUsers = apiSearchQuery.isPreviousData ? "blur" : "";
-
-  const enableNextPageBtn =
-    apiSearchQuery.data !== undefined ? apiSearchQuery.data.hasMoreData : false;
+  const usersExist =
+    apiSearchQuery.data &&
+    apiSearchQuery.data.pages &&
+    apiSearchQuery.data.pages.length > 0 &&
+    apiSearchQuery.data.pages[0].data &&
+    apiSearchQuery.data.pages[0].data.length > 0;
 
   return (
     <>
       <NavBar
-        searchQuery={router.query.query as string}
+        searchQuery={searchQuery}
         userId={props.authSession.user.id}
         bearerToken={props.authSession.access_token}
       />
-      <div className="flex-1 p-8 grid grid-cols-4">
-        {apiSearchQuery.data === undefined ||
-        apiSearchQuery.data.data.length === 0 ? (
-          <div className="col-start-2 col-end-4 flex flex-col items-center justify-center gap-2">
+      <div className="flex-1 flex flex-col p-4">
+        {apiSearchQuery.isError || usersExist === false ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-2">
             <Image
               alt="network-error"
               src={SadFaceImg}
@@ -86,52 +77,44 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
             </div>
           </div>
         ) : (
-          <>
-            {page > 1 && (
-              <div className="flex items-center justify-end pr-8">
-                <button
-                  className="btn btn-circle btn-outline"
-                  onClick={prevPageClicked}
-                >
-                  <BsChevronLeft />
-                </button>
-              </div>
-            )}
-
-            <div className="col-start-2 col-end-4">
-              <div
-                className={`flex flex-col justify-center gap-4 ${blurUsers}`}
-              >
-                {apiSearchQuery.isSuccess && (
-                  <>
-                    {apiSearchQuery.data?.data.map((user) => (
+          <div className="flex flex-col justify-center gap-4">
+            {apiSearchQuery.isSuccess && (
+              <>
+                {apiSearchQuery.data.pages?.map((group, idx) => (
+                  <React.Fragment key={idx}>
+                    {group.data.map((user) => (
                       <UserFoundCard
                         key={user.id}
                         user={user}
                         authSession={props.authSession}
                         router={router}
-                        page={page}
                         searchQuery={searchQuery}
                       />
                     ))}
-                  </>
-                )}
-              </div>
-            </div>
-
-            {enableNextPageBtn && (
-              <div className="flex items-center pl-8">
-                <button
-                  className="btn btn-circle btn-outline"
-                  onClick={nextPageClicked}
-                >
-                  <BsChevronRight />
-                </button>
-              </div>
+                  </React.Fragment>
+                ))}
+              </>
             )}
-          </>
+
+            <div>
+              <button
+                onClick={() => apiSearchQuery.fetchNextPage()}
+                disabled={
+                  !apiSearchQuery.hasNextPage ||
+                  apiSearchQuery.isFetchingNextPage
+                }
+              >
+                {apiSearchQuery.isFetchingNextPage
+                  ? "Loading more..."
+                  : apiSearchQuery.hasNextPage
+                  ? "Load More"
+                  : "Nothing more to load"}
+              </button>
+            </div>
+          </div>
         )}
       </div>
+      <BottomNav />
     </>
   );
 };
@@ -157,7 +140,7 @@ export const getServerSideProps: GetServerSideProps<SearchPageProps> = async (
       const queryClient = new QueryClient();
       const searchQuery = ctx.query.query as string;
       await queryClient.prefetchQuery(
-        ReadStore.queryKeys.usersBySearchQuery(searchQuery, 1),
+        ReadStore.queryKeys.usersBySearchQuery(searchQuery),
         () =>
           ReadStore.User.FindPaginated.apiCall(
             {
@@ -183,7 +166,6 @@ type UserFoundCardProps = {
   authSession: Session;
   router: NextRouter;
   searchQuery: string;
-  page: number;
 };
 
 const UserFoundCard = (props: UserFoundCardProps) => {
@@ -202,7 +184,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
       ),
     onSuccess: (response, request) => {
       queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
-        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
+        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery),
         (old) => {
           if (old === undefined) return old;
           return produce(old, (draft) => {
@@ -226,7 +208,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
       ),
     onSuccess: (_, request) => {
       queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
-        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
+        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery),
         (old) => {
           if (old === undefined) return old;
           return produce(old, (draft) => {
@@ -251,7 +233,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
       ),
     onSuccess: (_, request) => {
       queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
-        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
+        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery),
         (old) => {
           if (old === undefined) return old;
           return produce(old, (draft) => {
@@ -278,7 +260,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
       ),
     onSuccess: (_, request) => {
       queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
-        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
+        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery),
         (old) => {
           if (old === undefined) return old;
           return produce(old, (draft) => {
@@ -300,7 +282,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
       EventStore.User.Unfriend.apiCall(request, props.authSession.access_token),
     onSuccess: (_, request) => {
       queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
-        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery, props.page),
+        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery),
         (old) => {
           if (old === undefined) return old;
           return produce(old, (draft) => {
@@ -367,20 +349,23 @@ const UserFoundCard = (props: UserFoundCardProps) => {
       className="card card-compact bg-base-100 shadow-lg hover:bg-base-200 transition-colors cursor-pointer"
       onClick={onUserCardClicked}
     >
-      <div className="card-body flex flex-row gap-4 items-center">
-        <div className="avatar">
-          <div className="w-20 rounded-full">
-            <Image
-              alt={props.user.alias}
-              src={profilePicture}
-              width={100}
-              height={100}
-            />
+      <div className="card-body flex flex-col">
+        <div className="flex items-center gap-4">
+          <div className="avatar">
+            <div className="w-20 rounded-full">
+              <Image
+                alt={props.user.alias}
+                src={profilePicture}
+                width={100}
+                height={100}
+              />
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col">
-          <div className="text-base font-medium">{props.user.name}</div>
-          <div className="italic">@{props.user.alias}</div>
+
+          <div className="flex flex-col">
+            <div className="text-base font-medium">{props.user.name}</div>
+            <div className="italic">@{props.user.alias}</div>
+          </div>
         </div>
 
         {isFoundUserRequestUser ? (
@@ -408,42 +393,36 @@ const UserFoundCard = (props: UserFoundCardProps) => {
               </button>
             </div>
           ) : (
-            <div className="flex-1 flex justify-end">
-              <button
-                className="btn btn-ghost text-secondary"
-                onClick={onUserCardCancelBtnClicked}
-              >
-                {apiCancelFriendRequest.isLoading && (
-                  <span className="loading loading-spinner" />
-                )}
-                Cancel Friend Request
-              </button>
-            </div>
-          )
-        ) : isFoundUserFriend ? (
-          <div className="flex-1 flex justify-end">
             <button
               className="btn btn-ghost text-secondary"
-              onClick={onUserCardUnfriendBtnClicked}
+              onClick={onUserCardCancelBtnClicked}
             >
-              {apiUnfriendUser.isLoading && (
+              {apiCancelFriendRequest.isLoading && (
                 <span className="loading loading-spinner" />
               )}
-              Unfriend
+              Cancel Friend Request
             </button>
-          </div>
+          )
+        ) : isFoundUserFriend ? (
+          <button
+            className="btn btn-ghost text-secondary"
+            onClick={onUserCardUnfriendBtnClicked}
+          >
+            {apiUnfriendUser.isLoading && (
+              <span className="loading loading-spinner" />
+            )}
+            Unfriend
+          </button>
         ) : (
-          <div className="flex-1 flex justify-end">
-            <button
-              className="btn btn-ghost text-primary"
-              onClick={onUserCardSendBtnClicked}
-            >
-              {apiSendFriendRequest.isLoading && (
-                <span className="loading loading-spinner" />
-              )}
-              Add Friend
-            </button>
-          </div>
+          <button
+            className="btn btn-ghost text-primary"
+            onClick={onUserCardSendBtnClicked}
+          >
+            {apiSendFriendRequest.isLoading && (
+              <span className="loading loading-spinner" />
+            )}
+            Add Friend
+          </button>
         )}
       </div>
     </div>

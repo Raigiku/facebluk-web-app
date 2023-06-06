@@ -1,33 +1,47 @@
+import BottomNav from "@/components/bottom-nav";
 import NavBar from "@/components/navbar";
-import { EventStore, ReadStore } from "@/external-apis";
+import { EventStore, Pagination, ReadStore } from "@/external-apis";
+import { PostModel } from "@/external-apis/read-store/post";
+import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import {
   Session,
   createServerSupabaseClient,
 } from "@supabase/auth-helpers-nextjs";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { AxiosError } from "axios";
+import { produce } from "immer";
 import { GetServerSideProps } from "next";
-import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/router";
+import React, { useEffect, useState } from "react";
 import { FcInfo } from "react-icons/fc";
 
 type HomePageProps = {
   authSession: Session;
 };
 
+const pageSize = 20;
+
 const HomePage = (props: HomePageProps) => {
-  const apiPosts = useQuery({
-    queryKey: ReadStore.queryKeys.homePosts(1),
-    queryFn: () =>
+  const apiPosts = useInfiniteQuery({
+    queryKey: ReadStore.queryKeys.homePosts(),
+    queryFn: ({ pageParam = 1 }) =>
       ReadStore.Post.FindPaginated.apiCall(
         {
           filter: { a: { placeholder: true } },
           pagination: {
-            page: 1,
-            pageSize: 20,
+            page: pageParam,
+            pageSize,
           },
         },
         props.authSession.access_token
       ),
+    getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 
   return (
@@ -36,26 +50,43 @@ const HomePage = (props: HomePageProps) => {
         userId={props.authSession.user.id}
         bearerToken={props.authSession.access_token}
       />
-      <div className="flex-1 flex flex-col">
+
+      <div className="flex flex-col mb-16 overflow-y-auto">
         <InfoForm authSession={props.authSession} />
         <WritePostForm authSession={props.authSession} />
 
-        <div className="flex-1 flex flex-col items-center p-2 gap-2">
+        <div className="flex flex-col p-2 gap-2">
           <button
             className=" btn btn-primary btn-outline"
             onClick={() => (window as any).post_modal.showModal()}
           >
             Write a Post 🚀
           </button>
-          <div className="flex flex-col">
-            {apiPosts.data?.data.map((post) => (
-              <div key={post.id}>
-                <div>{post.description}</div>
-              </div>
-            ))}
-          </div>
+
+          {apiPosts.isSuccess && (
+            <div className="flex flex-col gap-4">
+              {apiPosts.data.pages.map((group, idx) => (
+                <React.Fragment key={idx}>
+                  {group.data.map((post) => (
+                    <PostCard key={post.id} post={post} />
+                  ))}
+                </React.Fragment>
+              ))}
+            </div>
+          )}
+
+          {apiPosts.hasNextPage && (
+            <button
+              className=" btn btn-primary btn-outline"
+              onClick={() => apiPosts.fetchNextPage()}
+            >
+              Load posts
+            </button>
+          )}
         </div>
       </div>
+
+      <BottomNav activeTab="home" />
     </>
   );
 };
@@ -242,15 +273,49 @@ type WritePostFormProps = {
 };
 
 const WritePostForm = (props: WritePostFormProps) => {
-  const [description, setDescription] = useState("");
+  const queryClient = useQueryClient();
+  const apiMyUser = useQuery({
+    queryKey: ReadStore.queryKeys.userById(props.authSession.user.id),
+    queryFn: () =>
+      ReadStore.User.FindOne.apiCall(
+        { filter: { a: { id: props.authSession.user.id } } },
+        props.authSession.access_token
+      ),
+  });
 
+  const [description, setDescription] = useState("");
   const [apiMutationError, setApiMutationError] = useState("");
 
   const apiSubmitPost = useMutation({
     mutationFn: (request: EventStore.Post.Create.Request) =>
       EventStore.Post.Create.apiCall(request, props.authSession.access_token),
-    onSuccess: () => {
+    onSuccess: (response, request) => {
       (window as any).post_modal.close();
+      queryClient.invalidateQueries({
+        queryKey: ReadStore.queryKeys.homePosts(),
+      });
+
+      if (apiMyUser.data != null) {
+        queryClient.setQueryData<Pagination.Response<ReadStore.Post.PostModel>>(
+          ReadStore.queryKeys.homePosts(),
+          (old) => {
+            if (old === undefined) return old;
+            return produce(old, (draft) => {
+              draft.data.unshift({
+                id: response.postId,
+                description: request.description,
+                user: {
+                  id: apiMyUser.data!.id,
+                  alias: apiMyUser.data!.alias,
+                  name: apiMyUser.data!.name,
+                  profilePictureUrl: apiMyUser.data!.profilePictureUrl,
+                },
+              });
+            });
+          }
+        );
+      }
+
       setApiMutationError("");
     },
     onError: (err) => {
@@ -292,7 +357,7 @@ const WritePostForm = (props: WritePostFormProps) => {
         <div className="text-secondary">{apiMutationError}</div>
 
         <button
-          className={`btn ${submitFormDisableClass}`}
+          className={`btn btn-outline btn-primary ${submitFormDisableClass}`}
           onClick={onClickSubmitForm}
         >
           {apiSubmitPost.isLoading && (
@@ -306,6 +371,48 @@ const WritePostForm = (props: WritePostFormProps) => {
         <button>close</button>
       </form>
     </dialog>
+  );
+};
+
+type PostCardProps = {
+  post: PostModel;
+};
+
+const PostCard = (props: PostCardProps) => {
+  const router = useRouter();
+
+  const profilePicture =
+    props.post.user.profilePictureUrl ?? AnonymousProfilePicture;
+
+  const onUserClicked = () => {
+    router.push(`/profile/${props.post.user.alias}`);
+  };
+
+  return (
+    <div className="card card-compact bg-base-100 shadow-md">
+      <div className="card-body flex flex-col gap-4">
+        <div className="flex gap-2">
+          <div className="avatar cursor-pointer" onClick={onUserClicked}>
+            <div className="w-8 rounded-full">
+              <Image
+                alt={props.post.id}
+                src={profilePicture}
+                width={200}
+                height={200}
+              />
+            </div>
+          </div>
+          <div
+            className="self-center font-medium cursor-pointer"
+            onClick={onUserClicked}
+          >
+            {props.post.user.name}
+          </div>
+        </div>
+
+        <div>{props.post.description}</div>
+      </div>
+    </div>
   );
 };
 

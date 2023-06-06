@@ -22,7 +22,7 @@ export const apiCall = (
         $pagination: Pagination!
       ) {
         friendRequests(filter: $filter, pagination: $pagination) {
-          hasMoreData
+          nextPage
           data {
             id
             fromUser {

@@ -4,6 +4,6 @@ export type Request = {
 };
 
 export type Response<T> = {
-  hasMoreData: boolean;
+  nextPage: number | null;
   data: T[];
 };

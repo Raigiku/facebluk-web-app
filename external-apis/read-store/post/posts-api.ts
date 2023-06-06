@@ -19,13 +19,14 @@ export const apiCall = (
     gql`
       query Posts($filter: PostsFilter!, $pagination: Pagination!) {
         posts(filter: $filter, pagination: $pagination) {
-          hasMoreData
+          nextPage
           data {
             id
             description
             user {
               id
               name
+              alias
               profilePictureUrl
             }
           }

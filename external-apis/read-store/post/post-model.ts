@@ -4,6 +4,7 @@ export type PostModel = {
   user: {
     id: string;
     name: string;
-    profilePictureUrl?: string;
+    alias: string;
+    profilePictureUrl: string | null;
   };
 };

@@ -58,10 +58,10 @@ const FriendRequestsPage: NextPageWithLayout<FriendRequestsPageProps> = (
 
   const blurUsers = apiFriendRequests.isPreviousData ? "blur" : "";
 
-  const enableNextPageBtn =
-    apiFriendRequests.data !== undefined
-      ? apiFriendRequests.data.hasMoreData
-      : false;
+  const enableNextPageBtn =false
+    // apiFriendRequests.data !== undefined
+    //   ? apiFriendRequests.data.hasMoreData
+    //   : false;
 
   const apiErrorOrNoResults =
     apiFriendRequests.isError || apiFriendRequests.data?.data.length === 0;
