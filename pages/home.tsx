@@ -1,4 +1,5 @@
 import BottomNav from "@/components/bottom-nav";
+import ContentContainer from "@/components/content-container";
 import NavBar from "@/components/navbar";
 import PostCard from "@/components/post-card";
 import { EventStore, Pagination, ReadStore } from "@/external-apis";
@@ -48,11 +49,11 @@ const HomePage = (props: HomePageProps) => {
         bearerToken={props.authSession.access_token}
       />
 
-      <div className="flex-1 flex flex-col mb-16 overflow-y-auto">
+      <ContentContainer>
         <InfoForm authSession={props.authSession} />
         <WritePostForm authSession={props.authSession} />
 
-        <div className="flex flex-col p-2 gap-2">
+        <div className="flex flex-col gap-2">
           <button
             className=" btn btn-primary btn-outline"
             onClick={() => (window as any).post_modal.showModal()}
@@ -81,7 +82,7 @@ const HomePage = (props: HomePageProps) => {
             </button>
           )}
         </div>
-      </div>
+      </ContentContainer>
 
       <BottomNav activeTab="home" authSession={props.authSession} />
     </>

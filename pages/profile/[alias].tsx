@@ -1,4 +1,5 @@
 import BottomNav from "@/components/bottom-nav";
+import ContentContainer from "@/components/content-container";
 import NavBar from "@/components/navbar";
 import PostCard from "@/components/post-card";
 import { ReadStore } from "@/external-apis";
@@ -76,7 +77,7 @@ const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
         bearerToken={props.authSession.access_token}
       />
 
-      <div className="flex-1 flex flex-col mb-16 overflow-y-auto p-2">
+      <ContentContainer>
         {apiUser.isError || apiUser.data == null ? (
           <div className="flex-1 flex flex-col justify-center items-center gap-2">
             <Image
@@ -148,7 +149,7 @@ const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
             )}
           </div>
         )}
-      </div>
+      </ContentContainer>
 
       <BottomNav
         activeTab={

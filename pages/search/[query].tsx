@@ -1,4 +1,5 @@
 import BottomNav from "@/components/bottom-nav";
+import ContentContainer from "@/components/content-container";
 import NavBar from "@/components/navbar";
 import { EventStore, Pagination, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
@@ -62,7 +63,8 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
         userId={props.authSession.user.id}
         bearerToken={props.authSession.access_token}
       />
-      <div className="flex-1 flex flex-col p-4">
+
+      <ContentContainer>
         {apiSearchQuery.isError || usersExist === false ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-2">
             <Image
@@ -114,7 +116,8 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
             </div>
           </div>
         )}
-      </div>
+      </ContentContainer>
+
       <BottomNav authSession={props.authSession} />
     </>
   );

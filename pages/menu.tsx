@@ -1,4 +1,5 @@
 import BottomNav from "@/components/bottom-nav";
+import ContentContainer from "@/components/content-container";
 import NavBar from "@/components/navbar";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -25,14 +26,16 @@ const MenuPage = (props: MenuPageProps) => {
         userId={props.authSession.user.id}
         bearerToken={props.authSession.access_token}
       />
-      <div className="flex-1 flex flex-col p-4">
+
+      <ContentContainer>
         <button
           className="card bg-base-200 p-4 text-secondary"
           onClick={onClickLogout}
         >
           Log out
         </button>
-      </div>
+      </ContentContainer>
+
       <BottomNav authSession={props.authSession} activeTab="menu" />
     </>
   );
