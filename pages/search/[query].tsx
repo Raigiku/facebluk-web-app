@@ -350,7 +350,7 @@ const UserFoundCard = (props: UserFoundCardProps) => {
 
   return (
     <div
-      className="card card-compact bg-base-100 shadow-lg hover:bg-base-200 transition-colors cursor-pointer"
+      className="card card-compact bg-base-100 shadow-md hover:bg-base-200 transition-colors cursor-pointer"
       onClick={onUserCardClicked}
     >
       <div className="card-body flex flex-col">

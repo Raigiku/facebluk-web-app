@@ -276,7 +276,7 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
 
   return (
     <div
-      className="card card-compact bg-base-100 shadow-lg hover:bg-base-200 transition-colors cursor-pointer"
+      className="card card-compact bg-base-100 shadow-md hover:bg-base-200 transition-colors cursor-pointer"
       onClick={onUserCardClicked}
     >
       <div className="card-body flex flex-row gap-4 items-center">
