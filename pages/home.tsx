@@ -78,7 +78,7 @@ const HomePage = (props: HomePageProps) => {
               className=" btn btn-primary btn-outline"
               onClick={() => apiPosts.fetchNextPage()}
             >
-              Load posts
+              Load more
             </button>
           )}
         </div>

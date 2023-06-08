@@ -19,6 +19,7 @@ import { GetServerSideProps } from "next";
 import Image from "next/image";
 import { NextRouter, useRouter } from "next/router";
 import React from "react";
+import tw from "tailwind-styled-components";
 import { NextPageWithLayout } from "../_app";
 
 type SearchPageProps = {
@@ -99,21 +100,14 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
               </>
             )}
 
-            <div>
+            {apiSearchQuery.hasNextPage && (
               <button
+                className=" btn btn-primary btn-outline"
                 onClick={() => apiSearchQuery.fetchNextPage()}
-                disabled={
-                  !apiSearchQuery.hasNextPage ||
-                  apiSearchQuery.isFetchingNextPage
-                }
               >
-                {apiSearchQuery.isFetchingNextPage
-                  ? "Loading more..."
-                  : apiSearchQuery.hasNextPage
-                  ? "Load More"
-                  : "Nothing more to load"}
+                Load more
               </button>
-            </div>
+            )}
           </div>
         )}
       </ContentContainer>
@@ -350,13 +344,13 @@ const UserFoundCard = (props: UserFoundCardProps) => {
 
   return (
     <div
-      className="card card-compact bg-base-100 shadow-md hover:bg-base-200 transition-colors cursor-pointer"
+      className="card bg-base-100 shadow-md overflow-hidden"
       onClick={onUserCardClicked}
     >
-      <div className="card-body flex flex-col">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col">
+        <div className="flex items-center gap-2 p-4 hover:bg-base-200 transition-colors cursor-pointer">
           <div className="avatar">
-            <div className="w-20 rounded-full">
+            <div className="w-14 rounded-full">
               <Image
                 alt={props.user.alias}
                 src={profilePicture}
@@ -376,59 +370,70 @@ const UserFoundCard = (props: UserFoundCardProps) => {
           <></>
         ) : isThereAPendingFriendRequest ? (
           isRequestUserReceiverOfPendingFriendRequest ? (
-            <div className="flex-1 flex justify-end">
-              <button
-                className="btn btn-ghost text-primary"
+            <div className="flex-1 flex">
+              <FriendRequestBtn
+                $primaryBtn={true}
+                className="flex-1"
                 onClick={onUserCardAcceptBtnClicked}
               >
                 {apiAcceptFriendRequest.isLoading && (
                   <span className="loading loading-spinner" />
                 )}
                 Accept
-              </button>
-              <button
-                className="btn btn-ghost text-secondary"
+              </FriendRequestBtn>
+              <FriendRequestBtn
+                $primaryBtn={false}
+                className="flex-1"
                 onClick={onUserCardRejectBtnClicked}
               >
                 {apiRejectFriendRequest.isLoading && (
                   <span className="loading loading-spinner" />
                 )}
                 Reject
-              </button>
+              </FriendRequestBtn>
             </div>
           ) : (
-            <button
-              className="btn btn-ghost text-secondary"
+            <FriendRequestBtn
+              $primaryBtn={false}
               onClick={onUserCardCancelBtnClicked}
             >
               {apiCancelFriendRequest.isLoading && (
                 <span className="loading loading-spinner" />
               )}
               Cancel Friend Request
-            </button>
+            </FriendRequestBtn>
           )
         ) : isFoundUserFriend ? (
-          <button
-            className="btn btn-ghost text-secondary"
+          <FriendRequestBtn
+            $primaryBtn={false}
             onClick={onUserCardUnfriendBtnClicked}
           >
             {apiUnfriendUser.isLoading && (
               <span className="loading loading-spinner" />
             )}
             Unfriend
-          </button>
+          </FriendRequestBtn>
         ) : (
-          <button
-            className="btn btn-ghost text-primary"
+          <FriendRequestBtn
+            $primaryBtn={true}
             onClick={onUserCardSendBtnClicked}
           >
             {apiSendFriendRequest.isLoading && (
               <span className="loading loading-spinner" />
             )}
             Add Friend
-          </button>
+          </FriendRequestBtn>
         )}
       </div>
     </div>
   );
 };
+
+const FriendRequestBtn = tw.button<{ $primaryBtn: boolean }>`
+  btn
+  border-none
+  text-white
+  ${(props) => (props.$primaryBtn ? "hover:bg-blue-300" : "hover:bg-red-300")}
+  ${(props) => (props.$primaryBtn ? "bg-primary" : "bg-secondary")}
+  rounded-none
+`;
