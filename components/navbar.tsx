@@ -1,6 +1,5 @@
 import { ReadStore } from "@/external-apis";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -14,7 +13,6 @@ type NavBarProps = {
 
 const NavBar = (props: NavBarProps) => {
   const router = useRouter();
-  const supabase = useSupabaseClient();
 
   const apiUser = useQuery({
     queryKey: ReadStore.queryKeys.userById(props.userId),
@@ -35,11 +33,6 @@ const NavBar = (props: NavBarProps) => {
     apiUser.data?.profilePictureUrl == null
       ? AnonymousProfilePicture
       : apiUser.data.profilePictureUrl;
-
-  const onClickLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
-  };
 
   return (
     <div className="flex pt-2 pl-2 pr-2 gap-2">

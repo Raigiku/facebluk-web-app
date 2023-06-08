@@ -25,4 +25,5 @@ export const queryKeys = {
 
   postsKey: "posts" as const,
   homePosts: () => [queryKeys.postsKey, "home"] as const,
+  userPosts: (userId: string) => [queryKeys.postsKey, "user", userId] as const,
 };

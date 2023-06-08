@@ -15,28 +15,26 @@ const HomePage = () => {
   }, [authSession, router]);
 
   return (
-    <div className="flex flex-1 self-center">
-      <div className="flex flex-1 gap-12">
-        <div className="flex flex-col flex-1 justify-center gap-2">
-          <h1 className="text-5xl font-bold text-primary">facebluk</h1>
-          <p className="text-lg">
-            Connect with friends and the world around you on Facebluk.
-          </p>
+    <div className="flex-1 flex flex-col justify-center p-4 text-center">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-5xl font-bold text-primary">facebluk</h1>
+        <div className="text-lg">
+          Connect with friends and the world around you!
         </div>
-        <div className="flex flex-col flex-1 justify-center">
-          <Auth
-            supabaseClient={supabase}
-            onlyThirdPartyProviders={true}
-            appearance={{
-              theme: ThemeSupa,
-              style: { button: { fontFamily: "system-ui" } },
-            }}
-            providers={["google"]}
-          />
-          <p className="self-center">
-            <span className="font-medium">Create a Page</span> for a celebrity,
-            brand or business.
-          </p>
+      </div>
+      <div className="flex flex-col">
+        <Auth
+          supabaseClient={supabase}
+          onlyThirdPartyProviders={true}
+          appearance={{
+            theme: ThemeSupa,
+            style: { button: { fontFamily: "system-ui" } },
+          }}
+          providers={["google"]}
+        />
+        <div className="self-center">
+          <span className="font-medium">Create a Page</span> for a celebrity,
+          brand or business.
         </div>
       </div>
     </div>

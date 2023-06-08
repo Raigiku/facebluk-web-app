@@ -1,8 +1,7 @@
 import BottomNav from "@/components/bottom-nav";
 import NavBar from "@/components/navbar";
+import PostCard from "@/components/post-card";
 import { EventStore, Pagination, ReadStore } from "@/external-apis";
-import { PostModel } from "@/external-apis/read-store/post";
-import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import {
   Session,
   createServerSupabaseClient,
@@ -16,8 +15,6 @@ import {
 import { AxiosError } from "axios";
 import { produce } from "immer";
 import { GetServerSideProps } from "next";
-import Image from "next/image";
-import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { FcInfo } from "react-icons/fc";
 
@@ -51,7 +48,7 @@ const HomePage = (props: HomePageProps) => {
         bearerToken={props.authSession.access_token}
       />
 
-      <div className="flex flex-col mb-16 overflow-y-auto">
+      <div className="flex-1 flex flex-col mb-16 overflow-y-auto">
         <InfoForm authSession={props.authSession} />
         <WritePostForm authSession={props.authSession} />
 
@@ -86,7 +83,7 @@ const HomePage = (props: HomePageProps) => {
         </div>
       </div>
 
-      <BottomNav activeTab="home" />
+      <BottomNav activeTab="home" authSession={props.authSession} />
     </>
   );
 };
@@ -371,48 +368,6 @@ const WritePostForm = (props: WritePostFormProps) => {
         <button>close</button>
       </form>
     </dialog>
-  );
-};
-
-type PostCardProps = {
-  post: PostModel;
-};
-
-const PostCard = (props: PostCardProps) => {
-  const router = useRouter();
-
-  const profilePicture =
-    props.post.user.profilePictureUrl ?? AnonymousProfilePicture;
-
-  const onUserClicked = () => {
-    router.push(`/profile/${props.post.user.alias}`);
-  };
-
-  return (
-    <div className="card card-compact bg-base-100 shadow-md">
-      <div className="card-body flex flex-col gap-4">
-        <div className="flex gap-2">
-          <div className="avatar cursor-pointer" onClick={onUserClicked}>
-            <div className="w-8 rounded-full">
-              <Image
-                alt={props.post.id}
-                src={profilePicture}
-                width={200}
-                height={200}
-              />
-            </div>
-          </div>
-          <div
-            className="self-center font-medium cursor-pointer"
-            onClick={onUserClicked}
-          >
-            {props.post.user.name}
-          </div>
-        </div>
-
-        <div>{props.post.description}</div>
-      </div>
-    </div>
   );
 };
 

@@ -1,18 +1,29 @@
+import BottomNav from "@/components/bottom-nav";
 import NavBar from "@/components/navbar";
+import PostCard from "@/components/post-card";
 import { ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
+import WindImg from "@/public/wind.png";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { Session } from "@supabase/auth-helpers-react";
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  dehydrate,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query";
 import { GetServerSideProps } from "next";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import React from "react";
 import { NextPageWithLayout } from "../_app";
 
 type ProfilePageProps = {
   authSession: Session;
 };
+
+const pageSize = 20;
 
 const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
   props: ProfilePageProps
@@ -31,8 +42,32 @@ const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
       ),
   });
 
+  const apiPosts = useInfiniteQuery({
+    queryKey: ReadStore.queryKeys.userPosts(apiUser.data!.id),
+    queryFn: ({ pageParam = 1 }) =>
+      ReadStore.Post.FindPaginated.apiCall(
+        {
+          filter: { b: { userId: apiUser.data!.id } },
+          pagination: {
+            page: pageParam,
+            pageSize,
+          },
+        },
+        props.authSession.access_token
+      ),
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    enabled: apiUser.data != null,
+  });
+
   const profilePicture =
     apiUser.data?.profilePictureUrl ?? AnonymousProfilePicture;
+
+  const postsExist =
+    apiPosts.data &&
+    apiPosts.data.pages &&
+    apiPosts.data.pages.length > 0 &&
+    apiPosts.data.pages[0].data &&
+    apiPosts.data.pages[0].data.length > 0;
 
   return (
     <>
@@ -40,36 +75,87 @@ const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
         userId={props.authSession.user.id}
         bearerToken={props.authSession.access_token}
       />
-      <div className="flex-1 flex">
-        {apiUser.data == null ? (
+
+      <div className="flex-1 flex flex-col mb-16 overflow-y-auto p-2">
+        {apiUser.isError || apiUser.data == null ? (
           <div className="flex-1 flex flex-col justify-center items-center gap-2">
             <Image
               alt="no-user-found"
-              src={SadFaceImg}
+              src={apiUser.isError ? SadFaceImg : WindImg}
               width={80}
               height={80}
             />
-            <div>No user found</div>
+            <div>
+              {apiPosts.isError
+                ? "An unexpected error ocurred. Try again later"
+                : "No user found"}
+            </div>
           </div>
         ) : (
-          <div className="flex-1 flex justify-center items-center gap-4">
-            <div className="avatar">
-              <div className="w-40 rounded-full">
-                <Image
-                  alt={apiUser.data.alias}
-                  src={profilePicture}
-                  width={80}
-                  height={80}
-                />
+          <div className="flex-1 flex flex-col gap-2">
+            <div className="flex flex-col items-center">
+              <div className="avatar">
+                <div className="w-20 rounded-full">
+                  <Image
+                    alt={apiUser.data.alias}
+                    src={profilePicture}
+                    width={80}
+                    height={80}
+                  />
+                </div>
               </div>
-            </div>
-            <div>
               <div className="text-base font-medium">{apiUser.data.name}</div>
               <div className="italic">@{apiUser.data.alias}</div>
             </div>
+
+            {apiPosts.isError || postsExist === false ? (
+              <div className="flex-1 flex flex-col items-center justify-center gap-2">
+                <Image
+                  alt="network-error"
+                  src={apiPosts.isError ? SadFaceImg : WindImg}
+                  width={80}
+                  height={80}
+                />
+                <div>
+                  {apiPosts.isError
+                    ? "An unexpected error ocurred. Try again later"
+                    : "No posts found"}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {apiPosts.isSuccess && (
+                  <>
+                    {apiPosts.data.pages.map((group, idx) => (
+                      <React.Fragment key={idx}>
+                        {group.data.map((post) => (
+                          <PostCard key={post.id} post={post} />
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+
+            {apiPosts.hasNextPage && (
+              <button
+                className=" btn btn-primary btn-outline"
+                onClick={() => apiPosts.fetchNextPage()}
+              >
+                Load posts
+              </button>
+            )}
           </div>
         )}
       </div>
+
+      <BottomNav
+        activeTab={
+          props.authSession.user.id === apiUser.data?.id ? "profile" : undefined
+        }
+        authSession={props.authSession}
+      />
     </>
   );
 };

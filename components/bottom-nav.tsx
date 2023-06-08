@@ -1,13 +1,26 @@
+import { ReadStore } from "@/external-apis";
+import { Session } from "@supabase/supabase-js";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { AiOutlineHome, AiOutlineMenu, AiOutlineUser } from "react-icons/ai";
 import { HiOutlineUsers } from "react-icons/hi";
 
 type BottomNavProps = {
-  activeTab?: "friends" | "home" | "settings" | "profile";
+  activeTab?: "friends" | "home" | "menu" | "profile";
+  authSession: Session;
 };
 
 const BottomNav = (props: BottomNavProps) => {
   const router = useRouter();
+
+  const apiUser = useQuery({
+    queryKey: ReadStore.queryKeys.userById(props.authSession.user.id),
+    queryFn: () =>
+      ReadStore.User.FindOne.apiCall(
+        { filter: { a: { id: props.authSession.user.id } } },
+        props.authSession.access_token
+      ),
+  });
 
   return (
     <div className="btm-nav">
@@ -34,7 +47,8 @@ const BottomNav = (props: BottomNavProps) => {
       <button
         className={props.activeTab === "profile" ? "active" : ""}
         onClick={() => {
-          // router.push("/friends");
+          if (apiUser.data != null)
+            router.push(`/profile/${apiUser.data.alias}`);
         }}
       >
         <AiOutlineUser />
@@ -42,9 +56,9 @@ const BottomNav = (props: BottomNavProps) => {
       </button>
 
       <button
-        className={props.activeTab === "settings" ? "active" : ""}
+        className={props.activeTab === "menu" ? "active" : ""}
         onClick={() => {
-          router.push("/settings");
+          router.push("/menu");
         }}
       >
         <AiOutlineMenu />

@@ -3,6 +3,7 @@ import NavBar from "@/components/navbar";
 import { EventStore, Pagination, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
+import WindImg from "@/public/wind.png";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { Session } from "@supabase/supabase-js";
 import {
@@ -66,12 +67,12 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
           <div className="flex-1 flex flex-col items-center justify-center gap-2">
             <Image
               alt="network-error"
-              src={SadFaceImg}
+              src={apiSearchQuery.isError ? SadFaceImg : WindImg}
               width={80}
               height={80}
             />
             <div>
-              {apiSearchQuery.data === undefined
+              {apiSearchQuery.isError
                 ? "An unexpected error ocurred. Try again later"
                 : "No users found"}
             </div>
@@ -114,7 +115,7 @@ const SearchPage: NextPageWithLayout<SearchPageProps> = (
           </div>
         )}
       </div>
-      <BottomNav />
+      <BottomNav authSession={props.authSession} />
     </>
   );
 };

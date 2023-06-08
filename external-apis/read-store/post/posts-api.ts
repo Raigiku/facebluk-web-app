@@ -6,6 +6,7 @@ import { PostModel } from "./post-model";
 export type Params = {
   filter: {
     a?: { placeholder: true };
+    b?: { userId: string };
   };
   pagination: Pagination.Request;
 };
