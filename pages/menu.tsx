@@ -6,6 +6,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Session } from "@supabase/supabase-js";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
+import tw from "tailwind-styled-components";
 
 type MenuPageProps = {
   authSession: Session;
@@ -28,12 +29,11 @@ const MenuPage = (props: MenuPageProps) => {
       />
 
       <ContentContainer>
-        <button
-          className="card bg-base-200 p-4 text-secondary"
-          onClick={onClickLogout}
-        >
-          Log out
-        </button>
+        <div className="card shadow-md rounded-[16px] overflow-hidden">
+          <MenuItem onClick={onClickLogout} className="text-secondary">
+            Log out
+          </MenuItem>
+        </div>
       </ContentContainer>
 
       <BottomNav authSession={props.authSession} activeTab="menu" />
@@ -42,6 +42,12 @@ const MenuPage = (props: MenuPageProps) => {
 };
 
 export default MenuPage;
+
+const MenuItem = tw.button`
+  hover:bg-gray-200
+  p-4
+  transition-colors
+`;
 
 export const getServerSideProps: GetServerSideProps<MenuPageProps> = async (
   ctx

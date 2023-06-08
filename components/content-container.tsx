@@ -1,13 +1,12 @@
-type ContentContainerProps = {
-  children: React.ReactNode;
-};
+import tw from "tailwind-styled-components";
 
-const ContentContainer = (props: ContentContainerProps) => {
-  return (
-    <div className="flex-1 flex flex-col mb-16 overflow-y-auto p-2">
-      {props.children}
-    </div>
-  );
-};
+const ContentContainer = tw.div`
+  flex-1
+  flex 
+  flex-col
+  mb-16
+  overflow-y-auto 
+  p-2
+`;
 
 export default ContentContainer;

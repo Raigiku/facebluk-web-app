@@ -25,7 +25,7 @@ type SearchPageProps = {
   authSession: Session;
 };
 
-const pageSize = 1;
+const pageSize = 20;
 
 const SearchPage: NextPageWithLayout<SearchPageProps> = (
   props: SearchPageProps
