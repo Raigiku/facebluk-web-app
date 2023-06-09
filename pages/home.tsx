@@ -298,7 +298,7 @@ const WritePostForm = (props: WritePostFormProps) => {
       queryClient.setQueryData<
         InfiniteData<Pagination.Response<ReadStore.Post.PostModel>>
       >(ReadStore.queryKeys.homePosts(), (old) => {
-        if (old === undefined) return undefined;
+        if (old === undefined) return old;
         return produce(old, (draft) => {
           const newPost: ReadStore.Post.PostModel = {
             id: response.postId,
