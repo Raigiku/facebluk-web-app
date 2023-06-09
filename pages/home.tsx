@@ -8,6 +8,7 @@ import {
   createServerSupabaseClient,
 } from "@supabase/auth-helpers-nextjs";
 import {
+  InfiniteData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -96,6 +97,7 @@ type InfoFormProps = {
 };
 
 const InfoForm = (props: InfoFormProps) => {
+  const queryClient = useQueryClient();
   const [isInfoModalActive, setIsInfoModalActive] = useState(false);
 
   const [name, setName] = useState("");
@@ -113,6 +115,9 @@ const InfoForm = (props: InfoFormProps) => {
     mutationFn: (request: EventStore.User.Register.Request) =>
       EventStore.User.Register.apiCall(request, props.authSession.access_token),
     onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ReadStore.queryKeys.userById(props.authSession.user.id),
+      });
       setIsInfoModalActive(false);
       setApiMutationError("");
     },
@@ -289,30 +294,30 @@ const WritePostForm = (props: WritePostFormProps) => {
       EventStore.Post.Create.apiCall(request, props.authSession.access_token),
     onSuccess: (response, request) => {
       (window as any).post_modal.close();
-      queryClient.invalidateQueries({
-        queryKey: ReadStore.queryKeys.homePosts(),
-      });
 
-      if (apiMyUser.data != null) {
-        queryClient.setQueryData<Pagination.Response<ReadStore.Post.PostModel>>(
-          ReadStore.queryKeys.homePosts(),
-          (old) => {
-            if (old === undefined) return old;
-            return produce(old, (draft) => {
-              draft.data.unshift({
-                id: response.postId,
-                description: request.description,
-                user: {
-                  id: apiMyUser.data!.id,
-                  alias: apiMyUser.data!.alias,
-                  name: apiMyUser.data!.name,
-                  profilePictureUrl: apiMyUser.data!.profilePictureUrl,
-                },
-              });
+      queryClient.setQueryData<
+        InfiniteData<Pagination.Response<ReadStore.Post.PostModel>>
+      >(ReadStore.queryKeys.homePosts(), (old) => {
+        if (old === undefined) return undefined;
+        return produce(old, (draft) => {
+          const newPost: ReadStore.Post.PostModel = {
+            id: response.postId,
+            description: request.description,
+            user: {
+              id: apiMyUser.data!.id,
+              alias: apiMyUser.data!.alias,
+              name: apiMyUser.data!.name,
+              profilePictureUrl: apiMyUser.data!.profilePictureUrl,
+            },
+          };
+          if (draft.pages.length === 0)
+            draft.pages.push({
+              nextPage: 2,
+              data: [newPost],
             });
-          }
-        );
-      }
+          else if (draft.pages.length > 0) draft.pages[0].data.unshift(newPost);
+        });
+      });
 
       setApiMutationError("");
     },

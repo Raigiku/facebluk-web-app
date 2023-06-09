@@ -8,6 +8,7 @@ import WindImg from "@/public/wind.png";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { Session } from "@supabase/supabase-js";
 import {
+  InfiniteData,
   QueryClient,
   dehydrate,
   useInfiniteQuery,
@@ -181,20 +182,23 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         props.authSession.access_token
       ),
     onSuccess: (response, request) => {
-      queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
-        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery),
-        (old) => {
-          if (old === undefined) return old;
-          return produce(old, (draft) => {
-            const user = draft.data.find((x) => x.id === request.toUserId);
-            if (user !== undefined)
-              user.relationshipWithUser.pendingFriendRequest = {
-                id: response.friendRequestId,
-                isRequestUserReceiver: false,
-              };
-          });
-        }
-      );
+      queryClient.setQueryData<
+        InfiniteData<Pagination.Response<ReadStore.User.UserModel>>
+      >(ReadStore.queryKeys.usersBySearchQuery(props.searchQuery), (old) => {
+        if (old === undefined) return old;
+        return produce(old, (draft) => {
+          const page = draft.pages.find((x) =>
+            x.data.some((x) => x.id === request.toUserId)
+          );
+          if (page !== undefined)
+            page.data.find(
+              (x) => x.id === request.toUserId
+            )!.relationshipWithUser.pendingFriendRequest = {
+              id: response.friendRequestId,
+              isRequestUserReceiver: false,
+            };
+        });
+      });
     },
   });
 
@@ -205,21 +209,26 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         props.authSession.access_token
       ),
     onSuccess: (_, request) => {
-      queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
-        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery),
-        (old) => {
-          if (old === undefined) return old;
-          return produce(old, (draft) => {
-            const user = draft.data.find(
+      queryClient.setQueryData<
+        InfiniteData<Pagination.Response<ReadStore.User.UserModel>>
+      >(ReadStore.queryKeys.usersBySearchQuery(props.searchQuery), (old) => {
+        if (old === undefined) return old;
+        return produce(old, (draft) => {
+          const page = draft.pages.find((x) =>
+            x.data.some(
               (x) =>
                 x.relationshipWithUser.pendingFriendRequest?.id ===
                 request.friendRequestId
-            );
-            if (user !== undefined)
-              user.relationshipWithUser.pendingFriendRequest = null;
-          });
-        }
-      );
+            )
+          );
+          if (page !== undefined)
+            page.data.find(
+              (x) =>
+                x.relationshipWithUser.pendingFriendRequest?.id ===
+                request.friendRequestId
+            )!.relationshipWithUser.pendingFriendRequest = null;
+        });
+      });
     },
   });
 
@@ -230,23 +239,29 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         props.authSession.access_token
       ),
     onSuccess: (_, request) => {
-      queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
-        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery),
-        (old) => {
-          if (old === undefined) return old;
-          return produce(old, (draft) => {
-            const user = draft.data.find(
+      queryClient.setQueryData<
+        InfiniteData<Pagination.Response<ReadStore.User.UserModel>>
+      >(ReadStore.queryKeys.usersBySearchQuery(props.searchQuery), (old) => {
+        if (old === undefined) return old;
+        return produce(old, (draft) => {
+          const page = draft.pages.find((x) =>
+            x.data.some(
+              (x) =>
+                x.relationshipWithUser.pendingFriendRequest?.id ===
+                request.friendRequestId
+            )
+          );
+          if (page !== undefined) {
+            const user = page.data.find(
               (x) =>
                 x.relationshipWithUser.pendingFriendRequest?.id ===
                 request.friendRequestId
             );
-            if (user !== undefined) {
-              user.relationshipWithUser.pendingFriendRequest = null;
-              user.relationshipWithUser.isFriend = true;
-            }
-          });
-        }
-      );
+            user!.relationshipWithUser.pendingFriendRequest = null;
+            user!.relationshipWithUser.isFriend = true;
+          }
+        });
+      });
     },
   });
 
@@ -257,21 +272,27 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         props.authSession.access_token
       ),
     onSuccess: (_, request) => {
-      queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
-        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery),
-        (old) => {
-          if (old === undefined) return old;
-          return produce(old, (draft) => {
-            const user = draft.data.find(
+      queryClient.setQueryData<
+        InfiniteData<Pagination.Response<ReadStore.User.UserModel>>
+      >(ReadStore.queryKeys.usersBySearchQuery(props.searchQuery), (old) => {
+        if (old === undefined) return old;
+        return produce(old, (draft) => {
+          const page = draft.pages.find((x) =>
+            x.data.some(
               (x) =>
                 x.relationshipWithUser.pendingFriendRequest?.id ===
                 request.friendRequestId
-            );
-            if (user !== undefined)
-              user.relationshipWithUser.pendingFriendRequest = null;
-          });
-        }
-      );
+            )
+          );
+          if (page !== undefined) {
+            page.data.find(
+              (x) =>
+                x.relationshipWithUser.pendingFriendRequest?.id ===
+                request.friendRequestId
+            )!.relationshipWithUser.pendingFriendRequest = null;
+          }
+        });
+      });
     },
   });
 
@@ -279,16 +300,20 @@ const UserFoundCard = (props: UserFoundCardProps) => {
     mutationFn: (request: EventStore.User.Unfriend.Request) =>
       EventStore.User.Unfriend.apiCall(request, props.authSession.access_token),
     onSuccess: (_, request) => {
-      queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
-        ReadStore.queryKeys.usersBySearchQuery(props.searchQuery),
-        (old) => {
-          if (old === undefined) return old;
-          return produce(old, (draft) => {
-            const user = draft.data.find((x) => x.id === request.toUserId);
-            if (user !== undefined) user.relationshipWithUser.isFriend = false;
-          });
-        }
-      );
+      queryClient.setQueryData<
+        InfiniteData<Pagination.Response<ReadStore.User.UserModel>>
+      >(ReadStore.queryKeys.usersBySearchQuery(props.searchQuery), (old) => {
+        if (old === undefined) return old;
+        return produce(old, (draft) => {
+          const page = draft.pages.find((x) =>
+            x.data.some((x) => x.id === request.toUserId)
+          );
+          if (page !== undefined)
+            page.data.find(
+              (x) => x.id === request.toUserId
+            )!.relationshipWithUser.isFriend = false;
+        });
+      });
     },
   });
 
