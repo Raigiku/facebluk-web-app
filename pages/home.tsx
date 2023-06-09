@@ -335,6 +335,7 @@ const WritePostForm = (props: WritePostFormProps) => {
 
   const onClickSubmitForm = (e: React.MouseEvent) => {
     e.preventDefault();
+    setDescription("");
     apiSubmitPost.mutate({ description });
   };
 

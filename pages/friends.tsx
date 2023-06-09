@@ -1,3 +1,5 @@
+import BottomNav from "@/components/bottom-nav";
+import ContentContainer from "@/components/content-container";
 import NavBar from "@/components/navbar";
 import { EventStore, Pagination, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
@@ -6,63 +8,30 @@ import WindImg from "@/public/wind.png";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { Session } from "@supabase/supabase-js";
 import {
+  InfiniteData,
   QueryClient,
   dehydrate,
+  useInfiniteQuery,
   useMutation,
-  useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import { produce } from "immer";
 import { GetServerSideProps } from "next";
 import Image from "next/image";
 import { NextRouter, useRouter } from "next/router";
-import { useState } from "react";
-import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
+import React, { useState } from "react";
 import { NextPageWithLayout } from "./_app";
 
 type FriendsPageProps = {
   authSession: Session;
 };
 
-const pageSize = 5;
+const pageSize = 20;
 
 const FriendsPage: NextPageWithLayout<FriendsPageProps> = (
   props: FriendsPageProps
 ) => {
-  const router = useRouter();
-  const [page, setPage] = useState(1);
-
-  const apiFriends = useQuery({
-    queryKey: ReadStore.queryKeys.myFriends(page),
-    queryFn: () =>
-      ReadStore.User.FindPaginated.apiCall(
-        {
-          filter: { b: { placeholder: true } },
-          pagination: {
-            page,
-            pageSize,
-          },
-        },
-        props.authSession.access_token
-      ),
-    keepPreviousData: true,
-  });
-
-  const nextPageClicked = async () => {
-    setPage((prev) => prev + 1);
-  };
-
-  const prevPageClicked = () => {
-    setPage((prev) => prev - 1);
-  };
-
-  const blurUsers = apiFriends.isPreviousData ? "blur" : "";
-
-  const enableNextPageBtn =false
-    // apiFriends.data !== undefined ? apiFriends.data.hasMoreData : false;
-
-  const apiErrorOrNoResults =
-    apiFriends.isError || apiFriends.data?.data.length === 0;
+  const [tabIdx, setTabIdx] = useState(0);
 
   return (
     <>
@@ -70,51 +39,27 @@ const FriendsPage: NextPageWithLayout<FriendsPageProps> = (
         userId={props.authSession.user.id}
         bearerToken={props.authSession.access_token}
       />
-      <div className="flex-1 p-8 grid grid-cols-4">
-        {apiErrorOrNoResults ? (
-          <ErrorOrNoResultsFound errorOcurred={apiFriends.isError} />
-        ) : (
-          <>
-            {page > 1 && (
-              <div className="flex items-center justify-end pr-8">
-                <button
-                  className="btn btn-circle btn-outline"
-                  onClick={prevPageClicked}
-                >
-                  <BsChevronLeft />
-                </button>
-              </div>
-            )}
 
-            <div className="col-start-2 col-end-4">
-              <div
-                className={`flex flex-col justify-center gap-4 ${blurUsers}`}
-              >
-                {apiFriends.data?.data.map((x) => (
-                  <FriendFoundCard
-                    key={x.id}
-                    authSession={props.authSession}
-                    router={router}
-                    friend={x}
-                    page={page}
-                  />
-                ))}
-              </div>
-            </div>
+      <ContentContainer>
+        <div className="tabs flex tabs-boxed">
+          <div
+            className={`flex-1 tab ${tabIdx === 0 ? "tab-active" : ""}`}
+            onClick={() => setTabIdx(0)}
+          >
+            Friends
+          </div>
+          <div
+            className={`flex-1 tab ${tabIdx === 1 ? "tab-active" : ""}`}
+            onClick={() => setTabIdx(1)}
+          >
+            Requests
+          </div>
+        </div>
 
-            {enableNextPageBtn && (
-              <div className="flex items-center pl-8">
-                <button
-                  className="btn btn-circle btn-outline"
-                  onClick={nextPageClicked}
-                >
-                  <BsChevronRight />
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+        {tabIdx === 0 && <FriendsContent authSession={props.authSession} />}
+      </ContentContainer>
+
+      <BottomNav activeTab="friends" authSession={props.authSession} />
     </>
   );
 };
@@ -138,7 +83,7 @@ export const getServerSideProps: GetServerSideProps<FriendsPageProps> = async (
 
     if (authSession !== undefined) {
       const queryClient = new QueryClient();
-      await queryClient.prefetchQuery(ReadStore.queryKeys.myFriends(1), () =>
+      await queryClient.prefetchQuery(ReadStore.queryKeys.myFriends(), () =>
         ReadStore.User.FindPaginated.apiCall(
           {
             filter: { b: { placeholder: true } },
@@ -158,11 +103,89 @@ export const getServerSideProps: GetServerSideProps<FriendsPageProps> = async (
   return { redirect: { destination: "/", permanent: true } };
 };
 
+type FriendsContentProps = {
+  authSession: Session;
+};
+
+const FriendsContent = (props: FriendsContentProps) => {
+  const router = useRouter();
+
+  const apiFriends = useInfiniteQuery({
+    queryKey: ReadStore.queryKeys.myFriends(),
+    queryFn: ({ pageParam = 1 }) =>
+      ReadStore.User.FindPaginated.apiCall(
+        {
+          filter: { b: { placeholder: true } },
+          pagination: {
+            page: pageParam,
+            pageSize,
+          },
+        },
+        props.authSession.access_token
+      ),
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
+
+  const friendsExist =
+    apiFriends.data &&
+    apiFriends.data.pages &&
+    apiFriends.data.pages.length > 0 &&
+    apiFriends.data.pages[0].data &&
+    apiFriends.data.pages[0].data.length > 0;
+
+  return (
+    <div>
+      {apiFriends.isError || friendsExist === false ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2">
+          <Image
+            alt="network-error"
+            src={apiFriends.isError ? SadFaceImg : WindImg}
+            width={80}
+            height={80}
+          />
+          <div>
+            {apiFriends.isError
+              ? "An unexpected error ocurred. Try again later"
+              : "You have no friends"}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col justify-center gap-4">
+          {apiFriends.isSuccess && (
+            <>
+              {apiFriends.data.pages?.map((group, idx) => (
+                <React.Fragment key={idx}>
+                  {group.data.map((user) => (
+                    <FriendFoundCard
+                      key={user.id}
+                      authSession={props.authSession}
+                      router={router}
+                      friend={user}
+                    />
+                  ))}
+                </React.Fragment>
+              ))}
+            </>
+          )}
+
+          {apiFriends.hasNextPage && (
+            <button
+              className=" btn btn-primary btn-outline"
+              onClick={() => apiFriends.fetchNextPage()}
+            >
+              Load more
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 type FriendCardProps = {
   friend: ReadStore.User.UserModel;
   authSession: Session;
   router: NextRouter;
-  page: number;
 };
 
 const FriendFoundCard = (props: FriendCardProps) => {
@@ -172,16 +195,20 @@ const FriendFoundCard = (props: FriendCardProps) => {
     mutationFn: (request: EventStore.User.Unfriend.Request) =>
       EventStore.User.Unfriend.apiCall(request, props.authSession.access_token),
     onSuccess: (_, request) => {
-      queryClient.setQueryData<Pagination.Response<ReadStore.User.UserModel>>(
-        ReadStore.queryKeys.myFriends(props.page),
-        (old) => {
-          if (old === undefined) return old;
-          return produce(old, (draft) => {
-            const idx = draft.data.findIndex((x) => x.id === request.toUserId);
-            if (idx !== -1) draft.data.splice(idx, 1);
-          });
-        }
-      );
+      queryClient.setQueryData<
+        InfiniteData<Pagination.Response<ReadStore.User.UserModel>>
+      >(ReadStore.queryKeys.myFriends(), (old) => {
+        if (old === undefined) return old;
+        return produce(old, (draft) => {
+          const page = draft.pages.find((x) =>
+            x.data.some((x) => x.id === request.toUserId)
+          );
+          if (page !== undefined) {
+            const idx = page.data.findIndex((x) => x.id === request.toUserId);
+            if (idx !== -1) page.data.splice(idx, 1);
+          }
+        });
+      });
     },
   });
 
@@ -199,57 +226,37 @@ const FriendFoundCard = (props: FriendCardProps) => {
 
   return (
     <div
-      className="card card-compact bg-base-100 shadow-md hover:bg-base-200 transition-colors cursor-pointer"
+      className="card bg-base-100 shadow-md overflow-hidden"
       onClick={onUserCardClicked}
     >
-      <div className="card-body flex flex-row gap-4 items-center">
-        <div className="avatar">
-          <div className="w-20 rounded-full">
-            <Image
-              alt={props.friend.id}
-              src={profilePicture}
-              width={100}
-              height={100}
-            />
+      <div className="flex flex-col">
+        <div className="flex items-center gap-2 p-4 hover:bg-base-200 transition-colors cursor-pointer">
+          <div className="avatar">
+            <div className="w-14 rounded-full">
+              <Image
+                alt={props.friend.alias}
+                src={profilePicture}
+                width={100}
+                height={100}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col">
+            <div className="text-base font-medium">{props.friend.name}</div>
+            <div className="italic">@{props.friend.alias}</div>
           </div>
         </div>
-        <div className="flex flex-col">
-          <div className="text-base font-medium">{props.friend.name}</div>
-          <div className="italic">@{props.friend.alias}</div>
-        </div>
-        <div className="flex-1 flex justify-end">
-          <button
-            className="btn btn-ghost text-secondary"
-            onClick={onUnfriendBtnClicked}
-          >
-            {apiUnfriend.isLoading && (
-              <span className="loading loading-spinner" />
-            )}
-            Unfriend
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
-type ErrorOrNoResultsFoundProps = {
-  errorOcurred: boolean;
-};
-
-const ErrorOrNoResultsFound = (props: ErrorOrNoResultsFoundProps) => {
-  return (
-    <div className="col-start-2 col-end-4 flex flex-col items-center justify-center gap-2">
-      <Image
-        alt="network-error"
-        src={props.errorOcurred ? SadFaceImg : WindImg}
-        width={80}
-        height={80}
-      />
-      <div>
-        {props.errorOcurred
-          ? "An unexpected error ocurred. Try again later"
-          : "No friends found"}
+        <button
+          className="btn border-none text-white hover:bg-red-300 bg-secondary rounded-none"
+          onClick={onUnfriendBtnClicked}
+        >
+          {apiUnfriend.isLoading && (
+            <span className="loading loading-spinner" />
+          )}
+          Unfriend
+        </button>
       </div>
     </div>
   );
