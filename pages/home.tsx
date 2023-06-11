@@ -27,6 +27,16 @@ type HomePageProps = {
 const pageSize = 20;
 
 const HomePage = (props: HomePageProps) => {
+  const [needsPersonalInfo, setNeedsPersonalInfo] = useState<
+    boolean | undefined
+  >(undefined);
+
+  useEffect(() => {
+    if (props.authSession.user.user_metadata.registeredAt === undefined)
+      setNeedsPersonalInfo(true);
+    else setNeedsPersonalInfo(false);
+  }, [props.authSession]);
+
   const apiPosts = useInfiniteQuery({
     queryKey: ReadStore.queryKeys.homePosts(),
     queryFn: ({ pageParam = 1 }) =>
@@ -41,7 +51,12 @@ const HomePage = (props: HomePageProps) => {
         props.authSession.access_token
       ),
     getNextPageParam: (lastPage) => lastPage.nextPage,
+    enabled: needsPersonalInfo === false,
   });
+
+  const onSuccessRegisterMutation = () => {
+    setNeedsPersonalInfo(false);
+  };
 
   return (
     <>
@@ -51,7 +66,13 @@ const HomePage = (props: HomePageProps) => {
       />
 
       <ContentContainer>
-        <InfoForm authSession={props.authSession} />
+        {needsPersonalInfo !== undefined && (
+          <InfoForm
+            authSession={props.authSession}
+            needsPersonalInfo={needsPersonalInfo}
+            onSuccessRegisterMutation={onSuccessRegisterMutation}
+          />
+        )}
         <WritePostForm authSession={props.authSession} />
 
         <div className="flex flex-col gap-2">
@@ -94,11 +115,12 @@ export default HomePage;
 
 type InfoFormProps = {
   authSession: Session;
+  needsPersonalInfo: boolean;
+  onSuccessRegisterMutation: () => void;
 };
 
 const InfoForm = (props: InfoFormProps) => {
   const queryClient = useQueryClient();
-  const [isInfoModalActive, setIsInfoModalActive] = useState(false);
 
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("Required");
@@ -118,8 +140,8 @@ const InfoForm = (props: InfoFormProps) => {
       queryClient.invalidateQueries({
         queryKey: ReadStore.queryKeys.userById(props.authSession.user.id),
       });
-      setIsInfoModalActive(false);
       setApiMutationError("");
+      props.onSuccessRegisterMutation();
     },
     onError: (err) => {
       if (err instanceof AxiosError) {
@@ -132,11 +154,6 @@ const InfoForm = (props: InfoFormProps) => {
       }
     },
   });
-
-  useEffect(() => {
-    if (props.authSession.user.user_metadata.registeredAt === undefined)
-      setIsInfoModalActive(true);
-  }, [props.authSession]);
 
   useEffect(() => {
     if (name.length === 0) setNameError("Required");
@@ -177,7 +194,7 @@ const InfoForm = (props: InfoFormProps) => {
         type="checkbox"
         id="info-modal"
         className="modal-toggle"
-        checked={isInfoModalActive}
+        checked={props.needsPersonalInfo}
         readOnly={true}
       />
       <div className="modal">
@@ -255,7 +272,7 @@ const InfoForm = (props: InfoFormProps) => {
 
           <div className="modal-action">
             <button
-              className="btn border-transparent"
+              className="btn btn-primary btn-outline flex-1"
               disabled={disableFormSubmitBtn}
               onClick={onClickSubmitForm}
             >

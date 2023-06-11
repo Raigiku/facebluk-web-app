@@ -1,3 +1,4 @@
+import { Supabase } from "@/external-apis";
 import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
 import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Auth, ThemeSupa } from "@supabase/auth-ui-react";
@@ -31,6 +32,7 @@ const HomePage = () => {
             style: { button: { fontFamily: "system-ui" } },
           }}
           providers={["google"]}
+          redirectTo={Supabase.REDIRECT_TO_URL}
         />
         <div className="self-center">
           <span className="font-medium">Create a Page</span> for a celebrity,

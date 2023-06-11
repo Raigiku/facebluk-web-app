@@ -57,11 +57,13 @@ const FriendsPage: NextPageWithLayout<FriendsPageProps> = (
           </div>
         </div>
 
-        {tabIdx === 0 ? (
-          <FriendsContent authSession={props.authSession} />
-        ) : (
-          <FriendRequestsContent authSession={props.authSession} />
-        )}
+        <div className="flex-1 overflow-y-auto">
+          {tabIdx === 0 ? (
+            <FriendsContent authSession={props.authSession} />
+          ) : (
+            <FriendRequestsContent authSession={props.authSession} />
+          )}
+        </div>
       </ContentContainer>
 
       <BottomNav activeTab="friends" authSession={props.authSession} />
@@ -139,7 +141,7 @@ const FriendsContent = (props: FriendsContentProps) => {
     apiFriends.data.pages[0].data.length > 0;
 
   return (
-    <div>
+    <>
       {apiFriends.isError || friendsExist === false ? (
         <ErrorOrNoResultsFound
           errorOcurred={apiFriends.isError}
@@ -174,7 +176,7 @@ const FriendsContent = (props: FriendsContentProps) => {
           )}
         </div>
       )}
-    </div>
+    </>
   );
 };
 
@@ -286,7 +288,7 @@ const FriendRequestsContent = (props: FriendRequestsContentProps) => {
     apiFriendRequests.data.pages[0].data.length > 0;
 
   return (
-    <div>
+    <>
       {apiFriendRequests.isError || friendRequestsExist === false ? (
         <ErrorOrNoResultsFound
           errorOcurred={apiFriendRequests.isError}
@@ -321,7 +323,7 @@ const FriendRequestsContent = (props: FriendRequestsContentProps) => {
           )}
         </div>
       )}
-    </div>
+    </>
   );
 };
 
