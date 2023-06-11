@@ -22,8 +22,6 @@ const HomePage = () => {
         <div className="text-lg">
           Connect with friends and the world around you!
         </div>
-      </div>
-      <div className="flex flex-col">
         <Auth
           supabaseClient={supabase}
           onlyThirdPartyProviders={true}
@@ -34,10 +32,6 @@ const HomePage = () => {
           providers={["google"]}
           redirectTo={Supabase.REDIRECT_TO_URL}
         />
-        <div className="self-center">
-          <span className="font-medium">Create a Page</span> for a celebrity,
-          brand or business.
-        </div>
       </div>
     </div>
   );
