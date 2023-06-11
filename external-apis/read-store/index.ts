@@ -2,12 +2,7 @@ export * as FriendRequest from "./friend-request";
 export * as Post from "./post";
 export * as User from "./user";
 
-export const READ_STORE_API_URL =
-  process.env.ENVIRONMENT === "local"
-    ? "http://localhost:4000"
-    : (() => {
-        throw new Error("ENVIRONMENT var undefined");
-      })();
+export const READ_STORE_API_URL = process.env.READ_STORE_API_URL!;
 
 export const queryKeys = {
   usersKey: "users" as const,
