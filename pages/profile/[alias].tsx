@@ -43,33 +43,6 @@ const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
       ),
   });
 
-  const apiPosts = useInfiniteQuery({
-    queryKey: ReadStore.queryKeys.userPosts(apiUser.data!.id),
-    queryFn: ({ pageParam = 1 }) =>
-      ReadStore.Post.FindPaginated.apiCall(
-        {
-          filter: { b: { userId: apiUser.data!.id } },
-          pagination: {
-            page: pageParam,
-            pageSize,
-          },
-        },
-        props.authSession.access_token
-      ),
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    enabled: apiUser.data != null,
-  });
-
-  const profilePicture =
-    apiUser.data?.profilePictureUrl ?? AnonymousProfilePicture;
-
-  const postsExist =
-    apiPosts.data &&
-    apiPosts.data.pages &&
-    apiPosts.data.pages.length > 0 &&
-    apiPosts.data.pages[0].data &&
-    apiPosts.data.pages[0].data.length > 0;
-
   return (
     <>
       <NavBar
@@ -87,67 +60,13 @@ const ProfilePage: NextPageWithLayout<ProfilePageProps> = (
               height={80}
             />
             <div>
-              {apiPosts.isError
+              {apiUser.isError
                 ? "An unexpected error ocurred. Try again later"
                 : "No user found"}
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col gap-2">
-            <div className="flex flex-col items-center">
-              <div className="avatar">
-                <div className="w-20 rounded-full">
-                  <Image
-                    alt={apiUser.data.alias}
-                    src={profilePicture}
-                    width={80}
-                    height={80}
-                  />
-                </div>
-              </div>
-              <div className="text-base font-medium">{apiUser.data.name}</div>
-              <div className="italic">@{apiUser.data.alias}</div>
-            </div>
-
-            {apiPosts.isError || postsExist === false ? (
-              <div className="flex-1 flex flex-col items-center justify-center gap-2">
-                <Image
-                  alt="network-error"
-                  src={apiPosts.isError ? SadFaceImg : WindImg}
-                  width={80}
-                  height={80}
-                />
-                <div>
-                  {apiPosts.isError
-                    ? "An unexpected error ocurred. Try again later"
-                    : "No posts found"}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {apiPosts.isSuccess && (
-                  <>
-                    {apiPosts.data.pages.map((group, idx) => (
-                      <React.Fragment key={idx}>
-                        {group.data.map((post) => (
-                          <PostCard key={post.id} post={post} />
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </>
-                )}
-              </div>
-            )}
-
-            {apiPosts.hasNextPage && (
-              <button
-                className=" btn btn-primary btn-outline"
-                onClick={() => apiPosts.fetchNextPage()}
-              >
-                Load more
-              </button>
-            )}
-          </div>
+          <ProfileUser authSession={props.authSession} user={apiUser.data} />
         )}
       </ContentContainer>
 
@@ -196,4 +115,95 @@ export const getServerSideProps: GetServerSideProps<ProfilePageProps> = async (
     }
   }
   return { redirect: { destination: "/", permanent: true } };
+};
+
+type ProfileUserProps = {
+  user: ReadStore.User.UserModel;
+  authSession: Session;
+};
+
+const ProfileUser = (props: ProfileUserProps) => {
+  const apiPosts = useInfiniteQuery({
+    queryKey: ReadStore.queryKeys.userPosts(props.user.id),
+    queryFn: ({ pageParam = 1 }) =>
+      ReadStore.Post.FindPaginated.apiCall(
+        {
+          filter: { b: { userId: props.user.id } },
+          pagination: {
+            page: pageParam,
+            pageSize,
+          },
+        },
+        props.authSession.access_token
+      ),
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
+
+  const profilePicture =
+    props.user.profilePictureUrl ?? AnonymousProfilePicture;
+
+  const postsExist =
+    apiPosts.data &&
+    apiPosts.data.pages &&
+    apiPosts.data.pages.length > 0 &&
+    apiPosts.data.pages[0].data &&
+    apiPosts.data.pages[0].data.length > 0;
+
+  return (
+    <div className="flex-1 flex flex-col gap-2">
+      <div className="flex flex-col items-center">
+        <div className="avatar">
+          <div className="w-20 rounded-full">
+            <Image
+              alt={props.user.alias}
+              src={profilePicture}
+              width={80}
+              height={80}
+            />
+          </div>
+        </div>
+        <div className="text-base font-medium">{props.user.name}</div>
+        <div className="italic">@{props.user.alias}</div>
+      </div>
+
+      {apiPosts.isError || postsExist === false ? (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2">
+          <Image
+            alt="network-error"
+            src={apiPosts.isError ? SadFaceImg : WindImg}
+            width={80}
+            height={80}
+          />
+          <div>
+            {apiPosts.isError
+              ? "An unexpected error ocurred. Try again later"
+              : "No posts found"}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {apiPosts.isSuccess && (
+            <>
+              {apiPosts.data.pages.map((group, idx) => (
+                <React.Fragment key={idx}>
+                  {group.data.map((post) => (
+                    <PostCard key={post.id} post={post} />
+                  ))}
+                </React.Fragment>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+
+      {apiPosts.hasNextPage && (
+        <button
+          className=" btn btn-primary btn-outline"
+          onClick={() => apiPosts.fetchNextPage()}
+        >
+          Load more
+        </button>
+      )}
+    </div>
+  );
 };
