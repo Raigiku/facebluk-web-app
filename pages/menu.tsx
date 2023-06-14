@@ -1,9 +1,7 @@
 import BottomNav from "@/components/bottom-nav";
 import ContentContainer from "@/components/content-container";
 import NavBar from "@/components/navbar";
-import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { Session } from "@supabase/supabase-js";
+import { Session, createClientComponentClient, createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import tw from "tailwind-styled-components";
@@ -13,7 +11,7 @@ type MenuPageProps = {
 };
 
 const MenuPage = (props: MenuPageProps) => {
-  const supabase = useSupabaseClient();
+  const supabase = createClientComponentClient();
   const router = useRouter();
 
   const onClickLogout = async () => {
@@ -52,7 +50,7 @@ const MenuItem = tw.button`
 export const getServerSideProps: GetServerSideProps<MenuPageProps> = async (
   ctx
 ) => {
-  const supabase = createServerSupabaseClient(ctx);
+  const supabase = createPagesServerClient (ctx);
   const sessionRes = await supabase.auth.getSession();
   if (sessionRes.data.session !== null) {
     let authSession: Session | undefined = undefined;

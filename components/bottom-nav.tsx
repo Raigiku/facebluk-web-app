@@ -1,5 +1,5 @@
 import { ReadStore } from "@/external-apis";
-import { Session } from "@supabase/supabase-js";
+import { Session } from "@supabase/auth-helpers-nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/router";
 import { AiOutlineHome, AiOutlineMenu, AiOutlineUser } from "react-icons/ai";

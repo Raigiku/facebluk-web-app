@@ -1,13 +1,14 @@
 import { Supabase } from "@/external-apis";
-import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { Auth, ThemeSupa } from "@supabase/auth-ui-react";
+import { createClientComponentClient, createPagesServerClient } from "@supabase/auth-helpers-nextjs";
+import { useSession } from "@supabase/auth-helpers-react";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 
 const HomePage = () => {
-  const supabase = useSupabaseClient();
+  const supabase = createClientComponentClient();
   const authSession = useSession();
   const router = useRouter();
 
@@ -40,7 +41,7 @@ const HomePage = () => {
 export default HomePage;
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const supabase = createServerSupabaseClient(ctx);
+  const supabase = createPagesServerClient(ctx);
   const sessionResponse = await supabase.auth.getSession();
   if (sessionResponse.data.session !== null)
     return { redirect: { destination: "/home", permanent: false } };

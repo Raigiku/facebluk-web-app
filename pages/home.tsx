@@ -5,7 +5,7 @@ import PostCard from "@/components/post-card";
 import { EventStore, Pagination, ReadStore } from "@/external-apis";
 import {
   Session,
-  createServerSupabaseClient,
+  createPagesServerClient,
 } from "@supabase/auth-helpers-nextjs";
 import {
   InfiniteData,
@@ -398,7 +398,7 @@ const WritePostForm = (props: WritePostFormProps) => {
 export const getServerSideProps: GetServerSideProps<HomePageProps> = async (
   ctx
 ) => {
-  const supabase = createServerSupabaseClient(ctx);
+  const supabase = createPagesServerClient(ctx);
   const sessionRes = await supabase.auth.getSession();
   if (sessionRes.data.session !== null) {
     if (sessionRes.data.session.user.user_metadata.registeredAt !== undefined)

@@ -5,8 +5,7 @@ import { EventStore, Pagination, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import WindImg from "@/public/wind.png";
-import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { Session } from "@supabase/supabase-js";
+import { Session, createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import {
   InfiniteData,
   QueryClient,
@@ -123,7 +122,7 @@ export default SearchPage;
 export const getServerSideProps: GetServerSideProps<SearchPageProps> = async (
   ctx
 ) => {
-  const supabase = createServerSupabaseClient(ctx);
+  const supabase = createPagesServerClient (ctx);
   const sessionRes = await supabase.auth.getSession();
   if (sessionRes.data.session !== null) {
     let authSession: Session | undefined = undefined;

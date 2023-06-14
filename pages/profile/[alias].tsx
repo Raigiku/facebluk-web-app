@@ -6,8 +6,7 @@ import { ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import WindImg from "@/public/wind.png";
-import { createServerSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import { Session } from "@supabase/auth-helpers-react";
+import { Session, createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import {
   QueryClient,
   dehydrate,
@@ -85,7 +84,7 @@ export default ProfilePage;
 export const getServerSideProps: GetServerSideProps<ProfilePageProps> = async (
   ctx
 ) => {
-  const supabase = createServerSupabaseClient(ctx);
+  const supabase = createPagesServerClient (ctx);
   const sessionRes = await supabase.auth.getSession();
   if (sessionRes.data.session !== null) {
     let authSession: Session | undefined = undefined;
