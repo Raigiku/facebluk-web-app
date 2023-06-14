@@ -1,5 +1,8 @@
 import { Supabase } from "@/external-apis";
-import { createClientComponentClient, createPagesServerClient } from "@supabase/auth-helpers-nextjs";
+import {
+  createClientComponentClient,
+  createPagesServerClient,
+} from "@supabase/auth-helpers-nextjs";
 import { useSession } from "@supabase/auth-helpers-react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
@@ -25,10 +28,21 @@ const HomePage = () => {
         </div>
         <Auth
           supabaseClient={supabase}
-          onlyThirdPartyProviders={true}
+          socialLayout="horizontal"
           appearance={{
             theme: ThemeSupa,
-            style: { button: { fontFamily: "system-ui" } },
+            style: {
+              button: { fontFamily: "system-ui", borderRadius: "9999px" },
+              input: { borderRadius: "9999px" },
+            },
+            variables: {
+              default: {
+                colors: {
+                  brand: "#3b82f6",
+                  brandAccent: "#2A40DE",
+                },
+              },
+            },
           }}
           providers={["google"]}
           redirectTo={Supabase.REDIRECT_TO_URL}
