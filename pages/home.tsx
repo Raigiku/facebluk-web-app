@@ -37,8 +37,6 @@ const HomePage = (props: HomePageProps) => {
     else setNeedsPersonalInfo(false);
   }, [props.authSession]);
 
-  console.log(props.authSession)
-
   const apiPosts = useInfiniteQuery({
     queryKey: ReadStore.queryKeys.homePosts(),
     queryFn: ({ pageParam = 1 }) =>
