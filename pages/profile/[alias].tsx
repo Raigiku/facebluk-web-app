@@ -6,12 +6,13 @@ import { ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import WindImg from "@/public/wind.png";
-import { Session, createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import {
-  QueryClient,
-  dehydrate,
+  Session,
+  createPagesServerClient,
+} from "@supabase/auth-helpers-nextjs";
+import {
   useInfiniteQuery,
-  useQuery,
+  useQuery
 } from "@tanstack/react-query";
 import { GetServerSideProps } from "next";
 import Image from "next/image";
@@ -84,7 +85,7 @@ export default ProfilePage;
 export const getServerSideProps: GetServerSideProps<ProfilePageProps> = async (
   ctx
 ) => {
-  const supabase = createPagesServerClient (ctx);
+  const supabase = createPagesServerClient(ctx);
   const sessionRes = await supabase.auth.getSession();
   if (sessionRes.data.session !== null) {
     let authSession: Session | undefined = undefined;
@@ -96,20 +97,8 @@ export const getServerSideProps: GetServerSideProps<ProfilePageProps> = async (
         authSession = refreshedSessionRes.data.session;
     }
     if (authSession !== undefined) {
-      const queryClient = new QueryClient();
-      const aliasQuery = ctx.query.alias as string;
-      await queryClient.prefetchQuery(
-        ReadStore.queryKeys.userByAlias(aliasQuery),
-        () =>
-          ReadStore.User.FindOne.apiCall(
-            {
-              filter: { b: { alias: aliasQuery } },
-            },
-            authSession!.access_token
-          )
-      );
       return {
-        props: { authSession, dehydratedState: dehydrate(queryClient) },
+        props: { authSession },
       };
     }
   }

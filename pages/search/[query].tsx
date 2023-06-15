@@ -11,11 +11,9 @@ import {
 } from "@supabase/auth-helpers-nextjs";
 import {
   InfiniteData,
-  QueryClient,
-  dehydrate,
   useInfiniteQuery,
   useMutation,
-  useQueryClient,
+  useQueryClient
 } from "@tanstack/react-query";
 import { produce } from "immer";
 import { GetServerSideProps } from "next";
@@ -138,24 +136,8 @@ export const getServerSideProps: GetServerSideProps<SearchPageProps> = async (
     }
 
     if (authSession !== undefined) {
-      const queryClient = new QueryClient();
-      const searchQuery = ctx.query.query as string;
-      await queryClient.prefetchQuery(
-        ReadStore.queryKeys.usersBySearchQuery(searchQuery),
-        () =>
-          ReadStore.User.FindPaginated.apiCall(
-            {
-              filter: { a: { searchQuery } },
-              pagination: {
-                page: 1,
-                pageSize,
-              },
-            },
-            authSession!.access_token
-          )
-      );
       return {
-        props: { authSession, dehydratedState: dehydrate(queryClient) },
+        props: { authSession },
       };
     }
   }
