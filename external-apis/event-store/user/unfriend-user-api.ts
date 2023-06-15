@@ -7,7 +7,7 @@ export type Request = {
 
 export const apiCall = (request: Request, bearerToken: string) => {
   return axios
-    .post("/api/users/unfriend", request, {
+    .post("/users/unfriend", request, {
       headers: { Authorization: `Bearer ${bearerToken}` },
       baseURL: EVENT_STORE_API_URL,
     })

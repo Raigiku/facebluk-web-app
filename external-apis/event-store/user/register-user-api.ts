@@ -15,7 +15,7 @@ export const apiCall = (request: Request, bearerToken: string) => {
     data.append("profilePicture", request.profilePicture);
 
   return axios
-    .postForm("/api/users/register", data, {
+    .postForm("/users/register", data, {
       headers: { Authorization: `Bearer ${bearerToken}` },
       baseURL: EVENT_STORE_API_URL,
     })
