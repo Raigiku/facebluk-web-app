@@ -5,7 +5,10 @@ import { EventStore, Pagination, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import WindImg from "@/public/wind.png";
-import { Session, createPagesServerClient } from "@supabase/auth-helpers-nextjs";
+import {
+  Session,
+  createPagesServerClient,
+} from "@supabase/auth-helpers-nextjs";
 import {
   InfiniteData,
   QueryClient,
@@ -122,7 +125,7 @@ export default SearchPage;
 export const getServerSideProps: GetServerSideProps<SearchPageProps> = async (
   ctx
 ) => {
-  const supabase = createPagesServerClient (ctx);
+  const supabase = createPagesServerClient(ctx);
   const sessionRes = await supabase.auth.getSession();
   if (sessionRes.data.session !== null) {
     let authSession: Session | undefined = undefined;
@@ -332,47 +335,42 @@ const UserFoundCard = (props: UserFoundCardProps) => {
   };
 
   const onUserCardSendBtnClicked = (e: React.MouseEvent) => {
-    e.stopPropagation();
     apiSendFriendRequest.mutate({
       toUserId: props.user.id,
     });
   };
 
   const onUserCardUnfriendBtnClicked = (e: React.MouseEvent) => {
-    e.stopPropagation();
     apiUnfriendUser.mutate({
       toUserId: props.user.id,
     });
   };
 
   const onUserCardCancelBtnClicked = (e: React.MouseEvent) => {
-    e.stopPropagation();
     apiCancelFriendRequest.mutate({
       friendRequestId: props.user.relationshipWithUser.pendingFriendRequest!.id,
     });
   };
 
   const onUserCardAcceptBtnClicked = (e: React.MouseEvent) => {
-    e.stopPropagation();
     apiAcceptFriendRequest.mutate({
       friendRequestId: props.user.relationshipWithUser.pendingFriendRequest!.id,
     });
   };
 
   const onUserCardRejectBtnClicked = (e: React.MouseEvent) => {
-    e.stopPropagation();
     apiRejectFriendRequest.mutate({
       friendRequestId: props.user.relationshipWithUser.pendingFriendRequest!.id,
     });
   };
 
   return (
-    <div
-      className="card bg-base-100 shadow-md overflow-hidden"
-      onClick={onUserCardClicked}
-    >
+    <div className="card shadow-md overflow-hidden">
       <div className="flex flex-col">
-        <div className="flex items-center gap-2 p-4 hover:bg-base-200 transition-colors cursor-pointer">
+        <button
+          className="flex items-center gap-2 p-4 btn-ghost"
+          onClick={onUserCardClicked}
+        >
           <div className="avatar">
             <div className="w-14 rounded-full">
               <Image
@@ -384,11 +382,11 @@ const UserFoundCard = (props: UserFoundCardProps) => {
             </div>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col text-start">
             <div className="text-base font-medium">{props.user.name}</div>
             <div className="italic">@{props.user.alias}</div>
           </div>
-        </div>
+        </button>
 
         {isFoundUserRequestUser ? (
           <></>
@@ -457,7 +455,6 @@ const FriendRequestBtn = tw.button<{ $primaryBtn: boolean }>`
   btn
   border-none
   text-white
-  ${(props) => (props.$primaryBtn ? "hover:bg-blue-300" : "hover:bg-red-300")}
-  ${(props) => (props.$primaryBtn ? "bg-primary" : "bg-secondary")}
   rounded-none
+  ${(props) => (props.$primaryBtn ? "btn-primary" : "btn-error")}
 `;

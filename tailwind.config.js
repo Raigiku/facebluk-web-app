@@ -10,10 +10,6 @@ module.exports = {
   ],
   theme: {
     extend: {
-      colors: {
-        primary: "#3b82f6",
-        secondary: "#ee4540",
-      },
       minHeight: {
         1: "1rem",
       },
@@ -22,5 +18,17 @@ module.exports = {
   plugins: [require("daisyui")],
   daisyui: {
     darkTheme: "none",
+    themes: [
+      {
+        faceblukTheme: {
+          primary: "#3b82f6",
+          secondary: "#F553AE",
+          accent: "#F5B83B",
+          neutral: "#3d4451",
+          error: "#ee4540",
+          "base-100": "#ffffff",
+        },
+      },
+    ],
   },
 };

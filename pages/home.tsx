@@ -37,6 +37,8 @@ const HomePage = (props: HomePageProps) => {
     else setNeedsPersonalInfo(false);
   }, [props.authSession]);
 
+  console.log(props.authSession)
+
   const apiPosts = useInfiniteQuery({
     queryKey: ReadStore.queryKeys.homePosts(),
     queryFn: ({ pageParam = 1 }) =>
@@ -215,7 +217,7 @@ const InfoForm = (props: InfoFormProps) => {
               }}
             />
             <label className="label">
-              <span className="label-text-alt text-secondary min-h-1">
+              <span className="label-text-alt text-error min-h-1">
                 {nameError}
               </span>
             </label>
@@ -235,7 +237,7 @@ const InfoForm = (props: InfoFormProps) => {
               }}
             />
             <label className="label">
-              <span className="label-text-alt text-secondary min-h-1">
+              <span className="label-text-alt text-error min-h-1">
                 {aliasError}
               </span>
             </label>
@@ -262,13 +264,13 @@ const InfoForm = (props: InfoFormProps) => {
               }}
             />
             <label className="label">
-              <span className="label-text-alt text-secondary min-h-1">
+              <span className="label-text-alt text-error min-h-1">
                 {profilePictureError}
               </span>
             </label>
           </div>
 
-          <div className="text-secondary">{apiMutationError}</div>
+          <div className="text-error">{apiMutationError}</div>
 
           <div className="modal-action">
             <button
@@ -337,6 +339,7 @@ const WritePostForm = (props: WritePostFormProps) => {
       });
 
       setApiMutationError("");
+      setDescription("");
     },
     onError: (err) => {
       if (err instanceof AxiosError) {
@@ -352,7 +355,6 @@ const WritePostForm = (props: WritePostFormProps) => {
 
   const onClickSubmitForm = (e: React.MouseEvent) => {
     e.preventDefault();
-    setDescription("");
     apiSubmitPost.mutate({ description });
   };
 
@@ -364,7 +366,7 @@ const WritePostForm = (props: WritePostFormProps) => {
       <form method="dialog" className="modal-box flex flex-col gap-4">
         <h1 className="font-bold text-lg">What do you want to write?</h1>
 
-        <div className="form-control">
+        <div className="form-control">  
           <textarea
             className="textarea textarea-bordered h-64"
             placeholder="Type here"
@@ -375,7 +377,7 @@ const WritePostForm = (props: WritePostFormProps) => {
           />
         </div>
 
-        <div className="text-secondary">{apiMutationError}</div>
+        <div className="text-error">{apiMutationError}</div>
 
         <button
           className={`btn btn-outline btn-primary ${submitFormDisableClass}`}

@@ -18,7 +18,7 @@ const PostCard = (props: PostCardProps) => {
   };
 
   return (
-    <div className="card card-compact bg-base-100 shadow-md">
+    <div className="card card-compact shadow-md">
       <div className="card-body flex flex-col gap-4">
         <div className="flex gap-2">
           <div className="avatar cursor-pointer" onClick={onUserClicked}>

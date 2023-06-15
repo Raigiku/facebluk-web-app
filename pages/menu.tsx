@@ -4,7 +4,6 @@ import NavBar from "@/components/navbar";
 import { Session, createClientComponentClient, createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
-import tw from "tailwind-styled-components";
 
 type MenuPageProps = {
   authSession: Session;
@@ -28,9 +27,9 @@ const MenuPage = (props: MenuPageProps) => {
 
       <ContentContainer>
         <div className="card shadow-md rounded-[16px] overflow-hidden">
-          <MenuItem onClick={onClickLogout} className="text-secondary">
+          <button onClick={onClickLogout} className="btn btn-error text-white p-4">
             Log out
-          </MenuItem>
+          </button>
         </div>
       </ContentContainer>
 
@@ -40,12 +39,6 @@ const MenuPage = (props: MenuPageProps) => {
 };
 
 export default MenuPage;
-
-const MenuItem = tw.button`
-  hover:bg-gray-200
-  p-4
-  transition-colors
-`;
 
 export const getServerSideProps: GetServerSideProps<MenuPageProps> = async (
   ctx

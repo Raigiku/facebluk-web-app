@@ -220,17 +220,16 @@ const FriendFoundCard = (props: FriendCardProps) => {
   };
 
   const onUnfriendBtnClicked = (e: React.MouseEvent) => {
-    e.stopPropagation();
     apiUnfriend.mutate({ toUserId: props.friend.id });
   };
 
   return (
-    <div
-      className="card bg-base-100 shadow-md overflow-hidden"
-      onClick={onUserCardClicked}
-    >
+    <div className="card shadow-md overflow-hidden">
       <div className="flex flex-col">
-        <div className="flex items-center gap-2 p-4 hover:bg-base-200 transition-colors cursor-pointer">
+        <button
+          className="flex items-center gap-2 p-4 btn-ghost"
+          onClick={onUserCardClicked}
+        >
           <div className="avatar">
             <div className="w-14 rounded-full">
               <Image
@@ -242,11 +241,11 @@ const FriendFoundCard = (props: FriendCardProps) => {
             </div>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col text-start">
             <div className="text-base font-medium">{props.friend.name}</div>
             <div className="italic">@{props.friend.alias}</div>
           </div>
-        </div>
+        </button>
 
         <CardBtn $primaryBtn={false} onClick={onUnfriendBtnClicked}>
           {apiUnfriend.isLoading && (
@@ -447,27 +446,24 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
   };
 
   const onCancelFriendRequestBtnClicked = (e: React.MouseEvent) => {
-    e.stopPropagation();
     apiCancelFriendRequest.mutate({ friendRequestId: props.friendRequest.id });
   };
 
   const onAcceptFriendRequestBtnClicked = (e: React.MouseEvent) => {
-    e.stopPropagation();
     apiAcceptFriendRequest.mutate({ friendRequestId: props.friendRequest.id });
   };
 
   const onRejectFriendRequestBtnClicked = (e: React.MouseEvent) => {
-    e.stopPropagation();
     apiRejectFriendRequest.mutate({ friendRequestId: props.friendRequest.id });
   };
 
   return (
-    <div
-      className="card bg-base-100 shadow-md overflow-hidden"
-      onClick={onUserCardClicked}
-    >
+    <div className="card shadow-md overflow-hidden">
       <div className="flex flex-col">
-        <div className="flex items-center gap-2 p-4 hover:bg-base-200 transition-colors cursor-pointer">
+        <button
+          className="flex items-center gap-2 p-4 btn-ghost"
+          onClick={onUserCardClicked}
+        >
           <div className="avatar">
             <div className="w-14 rounded-full">
               <Image
@@ -479,11 +475,11 @@ const FriendRequestFoundCard = (props: FriendRequestCardProps) => {
             </div>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col text-start">
             <div className="text-base font-medium">{name}</div>
             <div className="italic">@{alias}</div>
           </div>
-        </div>
+        </button>
 
         {amIFromUser ? (
           <CardBtn
@@ -552,7 +548,6 @@ const CardBtn = tw.button<{ $primaryBtn: boolean }>`
   btn
   border-none
   text-white
-  ${(props) => (props.$primaryBtn ? "hover:bg-blue-300" : "hover:bg-red-300")}
-  ${(props) => (props.$primaryBtn ? "bg-primary" : "bg-secondary")}
+  ${(props) => (props.$primaryBtn ? "btn-primary" : "btn-error")}
   rounded-none
 `;
