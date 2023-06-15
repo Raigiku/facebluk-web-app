@@ -13,7 +13,7 @@ const Layout = (props: LayoutProps) => {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex flex-col h-screen">{props.children}</main>
+      <main className="flex flex-col h-screen max-w-screen-md mx-auto">{props.children}</main>
     </>
   );
 };

@@ -23,7 +23,7 @@ const BottomNav = (props: BottomNavProps) => {
   });
 
   return (
-    <div className="btm-nav">
+    <div className="btm-nav static">
       <button
         className={props.activeTab === "home" ? "active" : ""}
         onClick={() => {
