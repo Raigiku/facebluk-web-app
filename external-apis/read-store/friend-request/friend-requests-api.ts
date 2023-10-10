@@ -1,7 +1,7 @@
 import { Pagination } from "@/external-apis/common";
 import { gql, request } from "graphql-request";
 import { FriendRequestModel } from ".";
-import { READ_STORE_API_URL } from "..";
+import { QUERY_API_URL } from "..";
 
 export type Params = {
   filter: {
@@ -15,7 +15,7 @@ export const apiCall = (
   bearerToken: string
 ): Promise<Pagination.Response<FriendRequestModel>> => {
   return request(
-    READ_STORE_API_URL,
+    QUERY_API_URL,
     gql`
       query FriendRequests(
         $filter: FriendRequestsFilter!

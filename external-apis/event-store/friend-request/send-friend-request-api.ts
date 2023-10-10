@@ -1,8 +1,8 @@
 import axios from "axios";
-import { EVENT_STORE_API_URL } from "..";
+import { COMMAND_API_URL } from "..";
 
 export type Request = {
-  toUserId: string;
+  otherUserId: string;
 };
 
 export type Response = {
@@ -11,9 +11,9 @@ export type Response = {
 
 export const apiCall = (request: Request, bearerToken: string) => {
   return axios
-    .post("/friend-requests/send", request, {
+    .post("/send-friend-request/v1", request, {
       headers: { Authorization: `Bearer ${bearerToken}` },
-      baseURL: EVENT_STORE_API_URL,
+      baseURL: COMMAND_API_URL,
     })
     .then((res) => res.data as Response);
 };

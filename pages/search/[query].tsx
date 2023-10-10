@@ -172,11 +172,11 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         if (old === undefined) return old;
         return produce(old, (draft) => {
           const page = draft.pages.find((x) =>
-            x.data.some((x) => x.id === request.toUserId)
+            x.data.some((x) => x.id === request.otherUserId)
           );
           if (page !== undefined)
             page.data.find(
-              (x) => x.id === request.toUserId
+              (x) => x.id === request.otherUserId
             )!.relationshipWithUser.pendingFriendRequest = {
               id: response.friendRequestId,
               isRequestUserReceiver: false,
@@ -290,11 +290,11 @@ const UserFoundCard = (props: UserFoundCardProps) => {
         if (old === undefined) return old;
         return produce(old, (draft) => {
           const page = draft.pages.find((x) =>
-            x.data.some((x) => x.id === request.toUserId)
+            x.data.some((x) => x.id === request.otherUserId)
           );
           if (page !== undefined)
             page.data.find(
-              (x) => x.id === request.toUserId
+              (x) => x.id === request.otherUserId
             )!.relationshipWithUser.isFriend = false;
         });
       });
@@ -318,13 +318,13 @@ const UserFoundCard = (props: UserFoundCardProps) => {
 
   const onUserCardSendBtnClicked = (e: React.MouseEvent) => {
     apiSendFriendRequest.mutate({
-      toUserId: props.user.id,
+      otherUserId: props.user.id,
     });
   };
 
   const onUserCardUnfriendBtnClicked = (e: React.MouseEvent) => {
     apiUnfriendUser.mutate({
-      toUserId: props.user.id,
+      otherUserId: props.user.id,
     });
   };
 

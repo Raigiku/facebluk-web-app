@@ -1,6 +1,6 @@
 import { Pagination } from "@/external-apis/common";
 import { gql, request } from "graphql-request";
-import { READ_STORE_API_URL } from "..";
+import { QUERY_API_URL } from "..";
 import { PostModel } from "./post-model";
 
 export type Params = {
@@ -16,7 +16,7 @@ export const apiCall = (
   bearerToken: string
 ): Promise<Pagination.Response<PostModel>> => {
   return request(
-    READ_STORE_API_URL,
+    QUERY_API_URL,
     gql`
       query Posts($filter: PostsFilter!, $pagination: Pagination!) {
         posts(filter: $filter, pagination: $pagination) {

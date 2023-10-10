@@ -186,10 +186,10 @@ const FriendFoundCard = (props: FriendCardProps) => {
         if (old === undefined) return old;
         return produce(old, (draft) => {
           const page = draft.pages.find((x) =>
-            x.data.some((x) => x.id === request.toUserId)
+            x.data.some((x) => x.id === request.otherUserId)
           );
           if (page !== undefined) {
-            const idx = page.data.findIndex((x) => x.id === request.toUserId);
+            const idx = page.data.findIndex((x) => x.id === request.otherUserId);
             if (idx !== -1) page.data.splice(idx, 1);
           }
         });
@@ -205,7 +205,7 @@ const FriendFoundCard = (props: FriendCardProps) => {
   };
 
   const onUnfriendBtnClicked = (e: React.MouseEvent) => {
-    apiUnfriend.mutate({ toUserId: props.friend.id });
+    apiUnfriend.mutate({ otherUserId: props.friend.id });
   };
 
   return (

@@ -2,7 +2,7 @@ export * as FriendRequest from "./friend-request";
 export * as Post from "./post";
 export * as User from "./user";
 
-export const READ_STORE_API_URL = process.env.NEXT_PUBLIC_READ_STORE_API_URL!;
+export const QUERY_API_URL = process.env.NEXT_PUBLIC_QUERY_API_URL!;
 
 export const queryKeys = {
   usersKey: "users" as const,

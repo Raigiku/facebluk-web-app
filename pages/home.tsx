@@ -353,7 +353,7 @@ const WritePostForm = (props: WritePostFormProps) => {
 
   const onClickSubmitForm = (e: React.MouseEvent) => {
     e.preventDefault();
-    apiSubmitPost.mutate({ description });
+    apiSubmitPost.mutate({ description, taggedUserIds: [] });
   };
 
   const submitFormDisableClass =
@@ -364,7 +364,7 @@ const WritePostForm = (props: WritePostFormProps) => {
       <form method="dialog" className="modal-box flex flex-col gap-4">
         <h1 className="font-bold text-lg">What do you want to write?</h1>
 
-        <div className="form-control">  
+        <div className="form-control">
           <textarea
             className="textarea textarea-bordered h-64"
             placeholder="Type here"

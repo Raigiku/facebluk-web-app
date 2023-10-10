@@ -1,5 +1,5 @@
 import axios from "axios";
-import { EVENT_STORE_API_URL } from "..";
+import { COMMAND_API_URL } from "..";
 
 export type Request = {
   name: string;
@@ -15,9 +15,9 @@ export const apiCall = (request: Request, bearerToken: string) => {
     data.append("profilePicture", request.profilePicture);
 
   return axios
-    .postForm("/users/register", data, {
+    .postForm("/register-user/v1", data, {
       headers: { Authorization: `Bearer ${bearerToken}` },
-      baseURL: EVENT_STORE_API_URL,
+      baseURL: COMMAND_API_URL,
     })
     .then((res) => res.data);
 };
