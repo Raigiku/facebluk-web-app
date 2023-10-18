@@ -2,7 +2,7 @@ import BottomNav from "@/components/bottom-nav";
 import ContentContainer from "@/components/content-container";
 import NavBar from "@/components/navbar";
 import PostCard from "@/components/post-card";
-import { ReadStore } from "@/external-apis";
+import { EventStore, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import WindImg from "@/public/wind.png";
@@ -12,13 +12,18 @@ import {
 } from "@supabase/auth-helpers-nextjs";
 import {
   useInfiniteQuery,
-  useQuery
+  useMutation,
+  useQuery,
+  useQueryClient
 } from "@tanstack/react-query";
 import { GetServerSideProps } from "next";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useState } from "react";
 import { NextPageWithLayout } from "../_app";
+import ImageFormPicker from "@/components/image-form-picker";
+import NameFormInput from "@/components/name-form-input";
+import { AxiosError } from "axios";
 
 type ProfilePageProps = {
   authSession: Session;
@@ -154,6 +159,24 @@ const ProfileUser = (props: ProfileUserProps) => {
         <div className="italic">@{props.user.alias}</div>
       </div>
 
+      <dialog id="edit-info-modal" className="modal">
+        <div className="modal-box">
+          <EditUserInfoForm
+            authSession={props.authSession}
+            name={props.user.name}
+          />
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
+      <button
+        className="btn btn-primary"
+        onClick={() => (document.getElementById('edit-info-modal')! as any).showModal()}
+      >
+        Edit Profile
+      </button>
+
       {apiPosts.isError || postsExist === false ? (
         <div className="flex-1 flex flex-col items-center justify-center gap-2">
           <Image
@@ -195,3 +218,94 @@ const ProfileUser = (props: ProfileUserProps) => {
     </div>
   );
 };
+
+type EditUserInfoFormProps = {
+  authSession: Session;
+  name: string
+}
+
+const EditUserInfoForm = (props: EditUserInfoFormProps) => {
+  const queryClient = useQueryClient();
+
+  const [name, setName] = useState(props.name);
+  const [nameError, setNameError] = useState("");
+
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [profilePictureError, setProfilePictureError] = useState("");
+
+  const [apiMutationError, setApiMutationError] = useState("");
+
+  const apiUpdateUserInfo = useMutation({
+    mutationFn: (request: EventStore.User.UpdateInfo.Request) =>
+      EventStore.User.UpdateInfo.apiCall(request, props.authSession.access_token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ReadStore.queryKeys.userById(props.authSession.user.id),
+      });
+      setApiMutationError("");
+      // props.onSuccessRegisterMutation();
+    },
+    onError: (err) => {
+      if (err instanceof AxiosError) {
+        if (err.response !== undefined) {
+          const res = err.response.data as EventStore.FaceblukApiError;
+          setApiMutationError(res.message);
+        } else {
+          setApiMutationError(err.message);
+        }
+      }
+    },
+  });
+
+  const anyInputErrors = nameError !== "" || profilePictureError !== ""
+  const emptyInputs = name === "" && profilePicture === null
+
+  const disableFormSubmitBtn =
+    anyInputErrors || apiUpdateUserInfo.isLoading || emptyInputs;
+
+  const onClickSubmitForm = (e: React.MouseEvent) => {
+    e.preventDefault();
+    apiUpdateUserInfo.mutate({ name, profilePicture });
+  };
+
+  return (
+    <>
+      <h3 className="font-bold text-lg">Edit your info</h3>
+
+      <NameFormInput
+        label="Your name"
+        required={false}
+        name={name}
+        setName={setName}
+        nameError={nameError}
+        setNameError={setNameError}
+      />
+
+      <ImageFormPicker
+        label="Your profile picture"
+        profilePicture={profilePicture}
+        setProfilePicture={setProfilePicture}
+        profilePictureError={profilePictureError}
+        setProfilePictureError={setProfilePictureError}
+      />
+
+      <div className="text-error">{apiMutationError}</div>
+
+      <div className="modal-action">
+        <button
+          className="btn btn-primary btn-outline"
+          disabled={disableFormSubmitBtn}
+          onClick={onClickSubmitForm}
+        >
+          {apiUpdateUserInfo.isLoading && (
+            <span className="loading loading-spinner" />
+          )}
+          Submit
+        </button>
+        <form method="dialog">
+          <button className="btn">Close</button>
+        </form>
+      </div>
+    </>
+  )
+}

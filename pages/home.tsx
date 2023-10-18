@@ -1,5 +1,7 @@
 import BottomNav from "@/components/bottom-nav";
 import ContentContainer from "@/components/content-container";
+import ImageFormPicker from "@/components/image-form-picker";
+import NameFormInput from "@/components/name-form-input";
 import NavBar from "@/components/navbar";
 import PostCard from "@/components/post-card";
 import { EventStore, Pagination, ReadStore } from "@/external-apis";
@@ -18,7 +20,6 @@ import { AxiosError } from "axios";
 import { produce } from "immer";
 import { GetServerSideProps } from "next";
 import React, { useEffect, useState } from "react";
-import { FcInfo } from "react-icons/fc";
 
 type HomePageProps = {
   authSession: Session;
@@ -156,11 +157,6 @@ const InfoForm = (props: InfoFormProps) => {
   });
 
   useEffect(() => {
-    if (name.length === 0) setNameError("Required");
-    else setNameError("");
-  }, [name]);
-
-  useEffect(() => {
     const alphanumericRegex = /^[a-z0-9]+$/i;
     if (alias.length === 0) setAliasError("Required");
     else if (!alphanumericRegex.test(alias))
@@ -168,22 +164,12 @@ const InfoForm = (props: InfoFormProps) => {
     else setAliasError("");
   }, [alias]);
 
-  useEffect(() => {
-    const allowedExtensions = ["image/png", "image/jpg", "image/jpeg"];
-    if (
-      profilePicture !== null &&
-      !allowedExtensions.includes(profilePicture.type)
-    ) {
-      setProfilePictureError("Not allowed extension");
-    } else setProfilePictureError("");
-  }, [profilePicture]);
-
   const onClickSubmitForm = (e: React.MouseEvent) => {
     e.preventDefault();
     apiSubmitUserRegister.mutate({ name, profilePicture, alias });
   };
 
-  const anyInputErrors = nameError !== "" || aliasError !== "";
+  const anyInputErrors = nameError !== "" || aliasError !== "" || profilePictureError !== "";
 
   const disableFormSubmitBtn =
     anyInputErrors || apiSubmitUserRegister.isLoading;
@@ -201,25 +187,14 @@ const InfoForm = (props: InfoFormProps) => {
         <div className="modal-box">
           <h1 className="font-bold text-lg">Welcome to Facebluk!</h1>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">What is your name?</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Type here"
-              className="input input-bordered"
-              value={name}
-              onChange={(e) => {
-                setName(e.currentTarget.value);
-              }}
-            />
-            <label className="label">
-              <span className="label-text-alt text-error min-h-1">
-                {nameError}
-              </span>
-            </label>
-          </div>
+          <NameFormInput
+            label="What is your name?"
+            required
+            name={name}
+            setName={setName}
+            nameError={nameError}
+            setNameError={setNameError}
+          />
 
           <div className="form-control">
             <label className="label">
@@ -241,32 +216,13 @@ const InfoForm = (props: InfoFormProps) => {
             </label>
           </div>
 
-          <div className="form-control">
-            <label className="label">
-              <div className="flex gap-1 items-center">
-                <span className="label-text">Upload your profile picture</span>
-                <div
-                  className="tooltip"
-                  data-tip="only allowed .jpeg .jpg .png"
-                >
-                  <FcInfo />
-                </div>
-              </div>
-            </label>
-            <input
-              type="file"
-              className="file-input file-input-bordered"
-              onChange={(e) => {
-                if (e.currentTarget.files === null) setProfilePicture(null);
-                else setProfilePicture(e.currentTarget.files[0]);
-              }}
-            />
-            <label className="label">
-              <span className="label-text-alt text-error min-h-1">
-                {profilePictureError}
-              </span>
-            </label>
-          </div>
+          <ImageFormPicker
+            label="Upload your profile picture"
+            profilePicture={profilePicture}
+            setProfilePicture={setProfilePicture}
+            profilePictureError={profilePictureError}
+            setProfilePictureError={setProfilePictureError}
+          />
 
           <div className="text-error">{apiMutationError}</div>
 
