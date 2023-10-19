@@ -2,7 +2,7 @@ import BottomNav from "@/components/bottom-nav";
 import ContentContainer from "@/components/content-container";
 import NavBar from "@/components/navbar";
 import PostCard from "@/components/post-card";
-import { EventStore, ReadStore } from "@/external-apis";
+import { EventStore, Pagination, ReadStore } from "@/external-apis";
 import SadFaceImg from "@/public/sad-face.png";
 import AnonymousProfilePicture from "@/public/user-anonymous-profile.png";
 import WindImg from "@/public/wind.png";
@@ -11,6 +11,7 @@ import {
   createPagesServerClient,
 } from "@supabase/auth-helpers-nextjs";
 import {
+  InfiniteData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -24,6 +25,7 @@ import { NextPageWithLayout } from "../_app";
 import ImageFormPicker from "@/components/image-form-picker";
 import NameFormInput from "@/components/name-form-input";
 import { AxiosError } from "axios";
+import { produce } from "immer";
 
 type ProfilePageProps = {
   authSession: Session;
@@ -116,6 +118,8 @@ type ProfileUserProps = {
 };
 
 const ProfileUser = (props: ProfileUserProps) => {
+  const queryClient = useQueryClient()
+
   const apiPosts = useInfiniteQuery({
     queryKey: ReadStore.queryKeys.userPosts(props.user.id),
     queryFn: ({ pageParam = 1 }) =>
@@ -142,6 +146,41 @@ const ProfileUser = (props: ProfileUserProps) => {
     apiPosts.data.pages[0].data &&
     apiPosts.data.pages[0].data.length > 0;
 
+  const onUpdateInfoSuccesful = (newName: string, newProfilePictureUrl?: string) => {
+    queryClient.setQueryData<ReadStore.User.UserModel | null>(ReadStore.queryKeys.userByAlias(props.user.alias), (old) => {
+      if (old === undefined) return old;
+      return produce(old, (draft) => {
+        if (draft == null) return old
+        draft.name = newName
+        draft.profilePictureUrl = newProfilePictureUrl ?? null
+      });
+    });
+
+    queryClient.setQueryData<ReadStore.User.UserModel | null>(ReadStore.queryKeys.userById(props.user.id), (old) => {
+      if (old === undefined) return old;
+      return produce(old, (draft) => {
+        if (draft == null) return old
+        draft.name = newName
+        draft.profilePictureUrl = newProfilePictureUrl ?? null
+      });
+    });
+
+    queryClient.setQueryData<InfiniteData<Pagination.Response<ReadStore.Post.PostModel>> | undefined>(ReadStore.queryKeys.userPosts(props.user.id), (old) => {
+      if (old === undefined) return old;
+      return produce(old, (draft) => {
+        if (draft == null) return old
+        for (const page of draft.pages) {
+          for (const post of page.data) {
+            post.user.name = newName
+            post.user.profilePictureUrl = newProfilePictureUrl ?? null
+          }
+        }
+      });
+    });
+
+    (document.getElementById('edit-info-modal')! as any).close()
+  }
+
   return (
     <div className="flex-1 flex flex-col gap-2">
       <div className="flex flex-col items-center">
@@ -164,6 +203,7 @@ const ProfileUser = (props: ProfileUserProps) => {
           <EditUserInfoForm
             authSession={props.authSession}
             name={props.user.name}
+            onSuccessMutation={onUpdateInfoSuccesful}
           />
         </div>
         <form method="dialog" className="modal-backdrop">
@@ -222,11 +262,10 @@ const ProfileUser = (props: ProfileUserProps) => {
 type EditUserInfoFormProps = {
   authSession: Session;
   name: string
+  onSuccessMutation: (newName: string, newProfilePictureUrl?: string) => void
 }
 
 const EditUserInfoForm = (props: EditUserInfoFormProps) => {
-  const queryClient = useQueryClient();
-
   const [name, setName] = useState(props.name);
   const [nameError, setNameError] = useState("");
 
@@ -238,12 +277,9 @@ const EditUserInfoForm = (props: EditUserInfoFormProps) => {
   const apiUpdateUserInfo = useMutation({
     mutationFn: (request: EventStore.User.UpdateInfo.Request) =>
       EventStore.User.UpdateInfo.apiCall(request, props.authSession.access_token),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ReadStore.queryKeys.userById(props.authSession.user.id),
-      });
+    onSuccess: (response, request) => {
       setApiMutationError("");
-      // props.onSuccessRegisterMutation();
+      props.onSuccessMutation(request.name, response.profilePictureUrl);
     },
     onError: (err) => {
       if (err instanceof AxiosError) {

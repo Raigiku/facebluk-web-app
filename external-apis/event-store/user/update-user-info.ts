@@ -6,6 +6,10 @@ export type Request = {
   profilePicture: File | null;
 };
 
+export type Response = {
+  profilePictureUrl?: string
+}
+
 export const apiCall = (request: Request, bearerToken: string) => {
   const data = new FormData();
   data.append("name", request.name);
@@ -17,5 +21,5 @@ export const apiCall = (request: Request, bearerToken: string) => {
       headers: { Authorization: `Bearer ${bearerToken}` },
       baseURL: COMMAND_API_URL,
     })
-    .then((res) => res.data);
+    .then((res) => res.data as Response);
 };
